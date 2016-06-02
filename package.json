@@ -1,0 +1,31 @@
+{
+  "name": "ilp-plugin-virtual",
+  "version": "0.0.0",
+  "description": "ILP virtual ledger plugin for directly transacting connectors",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/interledger/ilp-plugin-virtual.git"
+  },
+  "keywords": [
+    "virtual",
+    "trustline",
+    "ripple",
+    "ledgerless",
+    "trust",
+    "connector",
+    "ilp",
+    "interledger",
+    "payment",
+    "financial"
+  ],
+  "author": "Interledger Team <info@interledger.org>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/interledger/ilp-plugin-virtual/issues"
+  },
+  "homepage": "https://github.com/interledger/ilp-plugin-virtual#readme"
+}
