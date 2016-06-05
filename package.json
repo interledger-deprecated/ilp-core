@@ -1,6 +1,6 @@
 {
   "name": "ilp-core",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "ILP core module managing ledger abstraction",
   "main": "index.js",
   "scripts": {
