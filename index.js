@@ -1,4 +1,4 @@
 'use strict'
 
-// TODO: Implement module
-console.log('hello world')
+exports.Client = require('./src/lib/client')
+exports.Payment = require('./src/lib/payment')

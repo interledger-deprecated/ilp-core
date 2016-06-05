@@ -1,7 +1,7 @@
 {
-  "name": "ilp-plugin-virtual",
+  "name": "ilp-core",
   "version": "0.0.0",
-  "description": "ILP virtual ledger plugin for directly transacting connectors",
+  "description": "ILP core module managing ledger abstraction",
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/interledger/ilp-plugin-virtual.git"
+    "url": "git+https://github.com/interledger/js-ilp-core.git"
   },
   "keywords": [
     "virtual",
@@ -26,11 +26,12 @@
   "author": "Interledger Team <info@interledger.org>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/interledger/ilp-plugin-virtual/issues"
+    "url": "https://github.com/interledger/js-ilp-core/issues"
   },
-  "homepage": "https://github.com/interledger/ilp-plugin-virtual#readme",
+  "homepage": "https://github.com/interledger/js-ilp-core#readme",
   "devDependencies": {
     "chai": "^3.5.0",
+    "co-mocha": "^1.1.2",
     "cz-conventional-changelog": "^1.1.6",
     "eslint": "^2.11.1",
     "eslint-config-standard": "^5.3.1",
@@ -39,6 +40,8 @@
     "ghooks": "^1.2.1",
     "istanbul": "^0.4.3",
     "mocha": "^2.5.3",
+    "mock-require": "^1.3.0",
+    "nock": "^8.0.0",
     "validate-commit-msg": "^2.6.1"
   },
   "config": {
@@ -48,5 +51,10 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "eventemitter2": "^1.0.3",
+    "superagent": "^2.0.0",
+    "uuid": "^2.0.2"
   }
 }
