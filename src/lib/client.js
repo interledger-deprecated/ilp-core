@@ -42,7 +42,7 @@ class Client extends EventEmitter {
   waitForConnection () {
     // First check if we're even trying to connect
     if (!this.connecting) {
-      throw new Error('Plugin is set to disconnected state')
+      return Promise.reject(new Error('Plugin is set to disconnected state'))
     }
 
     // If we're already connected, just return

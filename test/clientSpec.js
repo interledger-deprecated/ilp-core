@@ -1,7 +1,11 @@
 'use strict'
 
 const sinon = require('sinon')
-const assert = require('chai').assert
+const chai = require('chai')
+const chaiAsPromised = require('chai-as-promised')
+const assert = chai.assert
+chai.use(chaiAsPromised)
+
 const mockRequire = require('mock-require')
 
 const ilpCore = require('..')
@@ -98,6 +102,19 @@ describe('Client', function () {
       })
 
       assert.instanceOf(payment, Payment)
+    })
+  })
+
+  describe('waitForConnection', function () {
+    it('should return a rejected promise if not currently connecting', function * () {
+      const client = new Client({
+        type: 'mock'
+      })
+
+      client.disconnect()
+      const promise = client.waitForConnection()
+
+      yield assert.isRejected(promise)
     })
   })
 })
