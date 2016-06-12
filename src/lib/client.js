@@ -24,7 +24,7 @@ class Client extends EventEmitter {
         console.error((err && err.stack) ? err.stack : err)
       })
 
-    this.plugin.on('incoming', (transfer) => this.emit('incoming', transfer))
+    this.plugin.on('receive', (transfer) => this.emit('receive', transfer))
     this.plugin.on('fulfill_execution_condition', (transfer, fulfillment) =>
       this.emit('fulfill_execution_condition', transfer, fulfillment))
     this.plugin.on('fulfill_cancellation_condition', (transfer, fulfillment) =>
