@@ -18,6 +18,7 @@ class Payment {
     this.destinationAmount = opts.destinationAmount
     this.destinationAccount = opts.destinationAccount
     this.destinationLedger = opts.destinationLedger
+    this.destinationMemo = opts.destinationMemo
     this.executionCondition = opts.executionCondition
     this.expiresAt = opts.expiresAt
   }
@@ -51,7 +52,8 @@ class Payment {
         ilp_header: omitUndefined({
           account: this.destinationAccount,
           ledger: this.destinationLedger,
-          amount: quote.destination_amount
+          amount: quote.destination_amount,
+          data: this.destinationMemo
         })
       },
       executionCondition: this.executionCondition,

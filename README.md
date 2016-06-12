@@ -15,7 +15,7 @@ npm install --save ilp-core ilp-plugin-bells
 ### Sending a Payment
 
 ``` js
-import { Client } from 'core'
+import { Client } from 'ilp-core'
 
 const client = new Client({
   type: 'bells',
@@ -29,6 +29,9 @@ const payment = client.createPayment({
   destinationAccount: 'https://blue.ilpdemo.org/ledger/accounts/bob',
   destinationLedger: 'https://blue.ilpdemo.org/ledger',
   destinationAmount: '1',
+  destinationMemo: {
+    myKey: 'myValue'
+  },
   executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
   expiresAt: (new Date(Date.now() + 4000)).toISOString()
 })

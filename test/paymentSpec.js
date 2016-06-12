@@ -28,7 +28,10 @@ describe('Payment', function () {
     this.payment = this.client.createPayment({
       destinationAmount: '1',
       destinationAccount: 'http://red.example/accounts/alice',
-      destinationLedger: 'http://red.example'
+      destinationLedger: 'http://red.example',
+      destinationMemo: {
+        hello: 'world'
+      }
     })
   })
 
@@ -77,7 +80,10 @@ describe('Payment', function () {
           ilp_header: {
             account: 'http://red.example/accounts/alice',
             amount: '9',
-            ledger: 'http://red.example'
+            ledger: 'http://red.example',
+            data: {
+              hello: 'world'
+            }
           }
         }
       })
