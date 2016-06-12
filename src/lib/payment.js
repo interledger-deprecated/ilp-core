@@ -1,8 +1,10 @@
 'use strict'
 
 const co = require('co')
-const uuid = require('uuid').v4
+const uuid = require('uuid')
 const request = require('superagent')
+const isUndefined = require('lodash/fp/isUndefined')
+const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 
 class Payment {
   constructor (client, opts) {
@@ -40,22 +42,22 @@ class Payment {
   }
 
   sendQuoted (quote) {
-    const transfer = {
-      id: uuid(),
+    const transfer = omitUndefined({
+      id: uuid.v4(),
       ledger: this.client.getPlugin().id,
       account: quote.source_connector_account,
       amount: quote.source_amount,
       data: {
-        ilp_header: {
+        ilp_header: omitUndefined({
           account: this.destinationAccount,
           ledger: this.destinationLedger,
           amount: quote.destination_amount
-        }
+        })
       },
       executionCondition: this.executionCondition,
       expiresAt: this.expiresAt
-    }
-    console.log('transfer', transfer)
+    })
+
     return this.client.getPlugin().send(transfer)
   }
 }
