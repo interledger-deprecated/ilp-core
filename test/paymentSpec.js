@@ -1,21 +1,23 @@
 'use strict'
 
 const nock = require('nock')
-const mockRequire = require('mock-require')
+const sinon = require('sinon')
+const mock = require('mock-require')
 const assert = require('chai').assert
+const uuid = require('uuid')
+
+const MockPlugin = require('./mocks/mock-plugin')
 
 const ilpCore = require('..')
 const Client = ilpCore.Client
-// const Payment = ilpCore.Payment
-const MockPlugin = require('./mocks/mock-plugin')
 
 describe('Payment', function () {
   beforeEach(function () {
-    mockRequire('ilp-plugin-mock', MockPlugin)
+    mock('ilp-plugin-mock', MockPlugin)
   })
 
   afterEach(function () {
-    mockRequire.stopAll()
+    mock.stopAll()
   })
 
   beforeEach(function () {
@@ -35,6 +37,7 @@ describe('Payment', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
+          source_ledger: 'mock:',
           destination_ledger: 'http://red.example',
           destination_amount: '1'
         })
@@ -43,6 +46,45 @@ describe('Payment', function () {
       const quote = yield this.payment.quote()
 
       assert.deepEqual(quote, { foo: true })
+    })
+  })
+
+  describe('sendQuoted', function () {
+    beforeEach(function () {
+      this.stubUuid = sinon.stub(uuid, 'v4')
+      this.stubUuid.returns('3521a290-98f1-4d5f-95e2-ee06ac1ae5fe')
+    })
+
+    afterEach(function () {
+      this.stubUuid.restore()
+    })
+
+    it('description', function * () {
+      const stubSend = sinon.stub(MockPlugin.prototype, 'send')
+      this.payment.sendQuoted({
+        source_amount: '10',
+        source_connector_account: 'bob',
+        destination_amount: '9'
+      })
+
+      sinon.assert.calledOnce(stubSend)
+      sinon.assert.calledWith(stubSend, {
+        id: '3521a290-98f1-4d5f-95e2-ee06ac1ae5fe',
+        ledger: 'mock:',
+        account: 'bob',
+        amount: '10',
+        data: {
+          ilp_header: {
+            account: 'http://red.example/accounts/alice',
+            amount: '9',
+            ledger: 'http://red.example'
+          }
+        }
+      })
+
+      sinon.assert.calledOnce(this.stubUuid)
+
+      stubSend.restore()
     })
   })
 })

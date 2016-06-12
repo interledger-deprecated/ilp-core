@@ -3,6 +3,11 @@
 const EventEmitter = require('eventemitter2')
 
 class MockPlugin extends EventEmitter {
+  constructor () {
+    super()
+    this.id = 'mock:'
+  }
+
   connect () {
     this.connected = true
     this.emit('connect')
@@ -19,6 +24,14 @@ class MockPlugin extends EventEmitter {
 
   getConnectors () {
     return Promise.resolve(['http://connector.example'])
+  }
+
+  send () {
+    return Promise.resolve(null)
+  }
+
+  fulfillCondition () {
+    return Promise.resolve(null)
   }
 }
 
