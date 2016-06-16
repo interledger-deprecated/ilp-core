@@ -29,6 +29,25 @@ class Client extends EventEmitter {
       this.emit('fulfill_execution_condition', transfer, fulfillment))
     this.plugin.on('fulfill_cancellation_condition', (transfer, fulfillment) =>
       this.emit('fulfill_cancellation_condition', transfer, fulfillment))
+
+    this._extensions = {}
+  }
+
+  /**
+   * Use an ILP Extension
+   * @param  {Function} extensionFactory ILP Extension factory that will be called with the client instance
+   */
+  use (extensionFactory) {
+    const ext = extensionFactory(this)
+    if (!ext || typeof ext !== 'object') {
+      throw new Error('extensionFactory must return an object')
+    }
+    if (!ext.name) {
+      throw new Error('extensionFactory must return an object with a name property')
+    }
+    const name = ext.name
+    this._extensions[name] = ext
+    this[name] = ext
   }
 
   getPlugin () {
