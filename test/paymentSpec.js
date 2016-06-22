@@ -31,7 +31,21 @@ describe('Payment', function () {
       destinationLedger: 'http://red.example',
       destinationMemo: {
         hello: 'world'
-      }
+      },
+      executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0'
+    })
+  })
+
+  describe('constructor', function () {
+    it('should throw an error if no executionCondition is given and unsafeOptimisticTransport is not explicitly set', function () {
+      assert.throws(() => this.client.createPayment({
+        destinationAmount: '1',
+        destinationAccount: 'http://red.example/accounts/alice',
+        destinationLedger: 'http://red.example',
+        destinationMemo: {
+          hello: 'world'
+        }
+      }), 'executionCondition must be provided unless unsafeOptimisticTransport is true')
     })
   })
 
@@ -76,6 +90,7 @@ describe('Payment', function () {
         ledger: 'mock:',
         account: 'bob',
         amount: '10',
+        executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
         data: {
           ilp_header: {
             account: 'http://red.example/accounts/alice',
@@ -84,6 +99,40 @@ describe('Payment', function () {
             data: {
               hello: 'world'
             }
+          }
+        }
+      })
+
+      sinon.assert.calledOnce(this.stubUuid)
+
+      stubSend.restore()
+    })
+
+    it('should send without an executionCondition if unsafeOptimisticTransport is set', function () {
+      const stubSend = sinon.stub(MockPlugin.prototype, 'send')
+      const payment = this.client.createPayment({
+        destinationAmount: '9',
+        destinationAccount: 'http://red.example/accounts/alice',
+        destinationLedger: 'http://red.example',
+        unsafeOptimisticTransport: true
+      })
+      payment.sendQuoted({
+        source_amount: '10',
+        source_connector_account: 'bob',
+        destination_amount: '9'
+      })
+
+      sinon.assert.calledOnce(stubSend)
+      sinon.assert.calledWith(stubSend, {
+        id: '3521a290-98f1-4d5f-95e2-ee06ac1ae5fe',
+        ledger: 'mock:',
+        account: 'bob',
+        amount: '10',
+        data: {
+          ilp_header: {
+            account: 'http://red.example/accounts/alice',
+            amount: '9',
+            ledger: 'http://red.example'
           }
         }
       })

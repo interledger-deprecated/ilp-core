@@ -99,7 +99,8 @@ describe('Client', function () {
       const payment = this.client.createPayment({
         destinationAmount: '1',
         destinationAccount: 'https://red.ilpdemo.org/ledger/accounts/alice',
-        destinationLedger: 'https://red.ilpdemo.org/ledger'
+        destinationLedger: 'https://red.ilpdemo.org/ledger',
+        executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0'
       })
 
       assert.instanceOf(payment, Payment)
