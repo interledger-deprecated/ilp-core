@@ -73,3 +73,38 @@ client.on('incoming', (transfer) => {
   client.fulfillCondition(transfer.id, 'cf:0:')
 })
 ```
+
+## Extensions
+
+To extend the functionality of the `Client`:
+
+```js
+import { Client } from 'ilp-core'
+
+const extensionFactory = (client) => {
+  // Do things with the client
+  const handleReceive = (transfer) => {
+    console.log(transfer)
+  }
+  client.on('receive', handleReceive)
+
+  const clientIsConnected = () => client.getPlugin().isConnected()
+
+  // Return an object that has a name property
+  return {
+    name: 'myExtension',
+    isConnected: clientIsConnected,
+  }
+}
+
+const client = new Client({
+  type: 'bells',
+  auth: {
+    account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
+    password: 'bobbob'
+  }
+})
+
+client.use(MyExtension)
+console.log(client.extension.isConnected())
+```

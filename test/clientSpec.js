@@ -2,6 +2,7 @@
 
 const sinon = require('sinon')
 const chai = require('chai')
+sinon.assert.expose(chai.assert, { prefix: '' })
 const chaiAsPromised = require('chai-as-promised')
 const assert = chai.assert
 chai.use(chaiAsPromised)
@@ -98,7 +99,8 @@ describe('Client', function () {
       const payment = this.client.createPayment({
         destinationAmount: '1',
         destinationAccount: 'https://red.ilpdemo.org/ledger/accounts/alice',
-        destinationLedger: 'https://red.ilpdemo.org/ledger'
+        destinationLedger: 'https://red.ilpdemo.org/ledger',
+        executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0'
       })
 
       assert.instanceOf(payment, Payment)
@@ -115,6 +117,49 @@ describe('Client', function () {
       const promise = client.waitForConnection()
 
       yield assert.isRejected(promise)
+    })
+  })
+
+  describe('use', function () {
+    beforeEach(function () {
+      this.client = new Client({
+        type: 'mock'
+      })
+    })
+
+    it('should call the extensionFactory with the client instance', function () {
+      const extensionFactory = (client) => ({
+        name: 'test'
+      })
+      const objUsedForSinonToWork = {
+        extensionFactory: extensionFactory
+      }
+      const spy = sinon.spy(objUsedForSinonToWork, 'extensionFactory')
+      this.client.use(objUsedForSinonToWork.extensionFactory)
+      assert.calledWith(spy, this.client)
+      spy.restore()
+    })
+
+    it('should throw an error if the extensionFactory does not return an object', function () {
+      const extensionFactory1 = (client) => null
+      const extensionFactory2 = (client) => 'blah'
+      assert.throws(() => { this.client.use(extensionFactory1) }, /^extensionFactory must return an object$/)
+      assert.throws(() => { this.client.use(extensionFactory2) }, /^extensionFactory must return an object$/)
+    })
+
+    it('should throw an error if the object returned by the factory does not have a `name` property', function () {
+      const extensionFactory = (client) => ({})
+      assert.throws(_ => this.client.use(extensionFactory), 'extensionFactory must return an object with a name property')
+    })
+
+    it('should make all extension properties available via client[name]', function () {
+      const extensionFactory = (client) => ({
+        name: 'test',
+        method: () => true
+      })
+      this.client.use(extensionFactory)
+      assert.typeOf(this.client.test.method, 'function')
+      assert.isTrue(this.client.test.method())
     })
   })
 })
