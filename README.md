@@ -91,8 +91,8 @@ class MyExtension {
     return 'extension'
   }
 
-  doSomething () {
-    console.log('hello there')
+  pluginIsConnected () {
+    return this.client.getPlugin().isConnected()
   }
 
   _handleReceive (transfer) {
@@ -109,5 +109,5 @@ const client = new Client({
 })
 
 client.use(MyExtension)
-client.extension.doSomething()
+console.log(client.extension.pluginIsConnected())
 ```
