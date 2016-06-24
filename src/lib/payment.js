@@ -19,8 +19,16 @@ class Payment {
     this.destinationAccount = opts.destinationAccount
     this.destinationLedger = opts.destinationLedger
     this.destinationMemo = opts.destinationMemo
-    this.executionCondition = opts.executionCondition
     this.expiresAt = opts.expiresAt
+
+    // Only allow sending without an executionCondition if
+    // unsafeOptimisticTransport is explicitly set
+    this.unsafeOptimisticTransport = opts.unsafeOptimisticTransport
+    this.executionCondition = opts.executionCondition
+
+    if (!this.executionCondition && !this.unsafeOptimisticTransport) {
+      throw new Error('executionCondition must be provided unless unsafeOptimisticTransport is true')
+    }
   }
 
   quote () {
