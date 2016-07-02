@@ -25,7 +25,7 @@ const client = new Client({
   }
 })
 
-const payment = client.createPayment({
+const payment = {
   destinationAccount: 'https://blue.ilpdemo.org/ledger/accounts/bob',
   destinationLedger: 'https://blue.ilpdemo.org/ledger',
   destinationAmount: '1',
@@ -34,19 +34,21 @@ const payment = client.createPayment({
   },
   executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
   expiresAt: (new Date(Date.now() + 4000)).toISOString()
-})
+}
 
-payment.quote()
-  .then((quote) => {
-    console.log('quote', quote)
-    return payment.sendQuoted(quote)
-  })
-  .then(() => {
-    console.log('payment sent')
-  })
-  .catch((err) => {
-    console.error((err && err.stack) ? err.stack : err)
-  })
+client.quote({
+  destinationLedger: payment.destinationLedger,
+  destinationAmount: payment.destinationAmount
+})
+.then((quote) => {
+  return client.sendQuotedPayment(Object.assign({}, payment, quote))
+})
+.then(() => {
+  console.log('payment sent')
+})
+.catch((err) => {
+  console.log(err)
+})
 
 client.on('fulfill_execution_condition', (transfer, fulfillment) => {
   console.log('transfer fulfilled', fulfillment)
@@ -55,7 +57,9 @@ client.on('fulfill_execution_condition', (transfer, fulfillment) => {
 
 ```
 
-### Receiving a Payment
+### Receiving a Transfer
+
+**Note that the `receive` event is fired for conditional transfers, so the event does not necessarily indicate that funds have been transferred**
 
 ``` js
 import { Client } from 'ilp-core'
@@ -68,7 +72,7 @@ const client = new Client({
   }
 })
 
-client.on('incoming', (transfer) => {
+client.on('receive', (transfer) => {
   console.log(transfer)
   client.fulfillCondition(transfer.id, 'cf:0:')
 })
