@@ -185,6 +185,73 @@ describe('Client', function () {
       })
       .catch(done)
     })
+
+    it('ignores AssetsNotTraded errors', function (done) {
+      nock('http://connector.example')
+        .get('/quote')
+        .query({
+          source_ledger: 'mock:',
+          destination_ledger: 'http://red.example',
+          destination_amount: '1'
+        })
+        .reply(422, {id: 'AssetsNotTradedError', message: 'broken'})
+
+      this.client.quote({
+        destinationLedger: 'http://red.example',
+        destinationAmount: '1'
+      }).then(function (quote) {
+        assert.strictEqual(quote, undefined)
+        done()
+      }).catch(done)
+    })
+
+    ;[
+      {
+        connector1: {source_amount: '1', destination_amount: '1'},
+        connector2: {source_amount: '2', destination_amount: '1'},
+        quote: {sourceAmount: '1', destinationAmount: '1', connectorAccount: 'connector1'}
+      },
+      {
+        connector1: {source_amount: '2', destination_amount: '1'},
+        connector2: {source_amount: '1', destination_amount: '1'},
+        quote: {sourceAmount: '1', destinationAmount: '1', connectorAccount: 'connector2'}
+      }
+    ].forEach(function (info) {
+      it('returns the cheapest quote', function * () {
+        this.client.plugin.getConnectors = function () {
+          return Promise.resolve([
+            'http://connector1.example',
+            'http://connector2.example'
+          ])
+        }
+
+        nock('http://connector1.example')
+          .get('/quote')
+          .query({
+            source_ledger: 'mock:',
+            destination_ledger: 'http://red.example',
+            destination_amount: '1'
+          })
+          .reply(200, Object.assign(info.connector1, {
+            source_connector_account: 'connector1'
+          }))
+        nock('http://connector2.example')
+          .get('/quote')
+          .query({
+            source_ledger: 'mock:',
+            destination_ledger: 'http://red.example',
+            destination_amount: '1'
+          })
+          .reply(200, Object.assign(info.connector2, {
+            source_connector_account: 'connector2'
+          }))
+
+        assert.deepEqual(yield this.client.quote({
+          destinationLedger: 'http://red.example',
+          destinationAmount: '1'
+        }), info.quote)
+      })
+    })
   })
 
   describe('sendQuotedPayment', function () {

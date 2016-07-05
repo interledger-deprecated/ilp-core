@@ -3,9 +3,11 @@
 const co = require('co')
 const uuid = require('uuid')
 const request = require('superagent')
+const BigNumber = require('bignumber.js')
 const isUndefined = require('lodash/fp/isUndefined')
 const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 const EventEmitter = require('eventemitter2')
+const notUndefined = require('lodash/fp/negate')(isUndefined)
 
 class Client extends EventEmitter {
   constructor (opts) {
@@ -99,19 +101,22 @@ class Client extends EventEmitter {
         throw new Error('Should provide source or destination amount but not both')
       }
 
-      const connector = (yield plugin.getConnectors())[0]
-      const res = yield request.get(connector + '/quote')
-        .query({
-          source_ledger: plugin.id,
-          source_amount: params.sourceAmount,
-          destination_ledger: params.destinationLedger,
-          destination_amount: params.destinationAmount
-        })
-
+      const quoteQuery = {
+        source_ledger: plugin.id,
+        source_amount: params.sourceAmount,
+        destination_ledger: params.destinationLedger,
+        destination_amount: params.destinationAmount
+      }
+      const connectors = yield plugin.getConnectors()
+      const quotes = (yield connectors.map(function (connector) {
+        return getQuote(connector, quoteQuery)
+      })).filter(notUndefined)
+      if (quotes.length === 0) return
+      const bestQuote = quotes.reduce(getCheaperQuote)
       return omitUndefined({
-        sourceAmount: res.body.source_amount,
-        destinationAmount: res.body.destination_amount,
-        connectorAccount: res.body.source_connector_account
+        sourceAmount: bestQuote.source_amount,
+        destinationAmount: bestQuote.destination_amount,
+        connectorAccount: bestQuote.source_connector_account
       })
     })
   }
@@ -158,6 +163,27 @@ class Client extends EventEmitter {
 
     return this.plugin.send(transfer)
   }
+}
+
+function * getQuote (connector, query) {
+  try {
+    const res = yield request.get(connector + '/quote').query(query)
+    return res.body
+  } catch (err) {
+    if (err.response.body.id !== 'AssetsNotTradedError') throw err
+  }
+}
+
+function getCheaperQuote (quote1, quote2) {
+  if ((new BigNumber(quote1.source_amount))
+      .lessThan(quote2.source_amount)) {
+    return quote1
+  }
+  if ((new BigNumber(quote1.destination_amount))
+      .lessThan(quote2.destination_amount)) {
+    return quote1
+  }
+  return quote2
 }
 
 module.exports = Client
