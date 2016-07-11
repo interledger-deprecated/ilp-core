@@ -23,10 +23,6 @@ class Client extends EventEmitter {
 
     this.plugin = new Plugin(opts)
     this.connecting = true
-    this.plugin.connect()
-      .catch((err) => {
-        console.error((err && err.stack) ? err.stack : err)
-      })
 
     this.plugin.on('receive', (transfer) => this.emit('receive', transfer))
     this.plugin.on('fulfill_execution_condition', (transfer, fulfillment) =>
@@ -77,7 +73,7 @@ class Client extends EventEmitter {
 
   connect () {
     this.connecting = true
-    this.plugin.connect()
+    return this.plugin.connect()
   }
 
   disconnect () {

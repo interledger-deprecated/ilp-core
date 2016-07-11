@@ -25,6 +25,8 @@ const client = new Client({
   }
 })
 
+yield client.connect()
+
 const payment = {
   destinationAccount: 'https://blue.ilpdemo.org/ledger/accounts/bob',
   destinationLedger: 'https://blue.ilpdemo.org/ledger',
@@ -71,6 +73,8 @@ const client = new Client({
     password: 'bobbob'
   }
 })
+
+yield client.connect()
 
 client.on('receive', (transfer) => {
   console.log(transfer)
