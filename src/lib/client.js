@@ -22,7 +22,7 @@ class Client extends EventEmitter {
     const Plugin = require('ilp-plugin-' + opts.type)
 
     this.plugin = new Plugin(opts)
-    this.connecting = true
+    this.connecting = false
 
     this.plugin.on('receive', (transfer) => this.emit('receive', transfer))
     this.plugin.on('fulfill_execution_condition', (transfer, fulfillment) =>
