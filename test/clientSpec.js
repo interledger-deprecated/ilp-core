@@ -104,7 +104,7 @@ describe('Client', function () {
 
     it('should reject if neither sourceAmount nor destinationAmount are specified', function (done) {
       this.client.quote({
-        destinationLedger: 'http://red.example'
+        destinationAddress: 'example.red'
       })
       .catch(function (err) {
         assert.equal(err.message, 'Should provide source or destination amount but not both')
@@ -114,7 +114,7 @@ describe('Client', function () {
 
     it('should reject if both sourceAmount and destinationAmount are specified', function (done) {
       this.client.quote({
-        destinationLedger: 'http://red.example',
+        destinationAddress: 'example.red',
         sourceAmount: '10',
         destinationAmount: '10'
       })
@@ -128,8 +128,8 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_ledger: 'mock:',
-          destination_ledger: 'http://red.example',
+          source_address: 'mock',
+          destination_address: 'example.red',
           source_amount: '1'
         })
         .reply(200, {
@@ -137,7 +137,7 @@ describe('Client', function () {
           source_connector_account: 'mock/connector'
         })
       this.client.quote({
-        destinationLedger: 'http://red.example',
+        destinationAddress: 'example.red',
         sourceAmount: '1'
       })
       .then(function (quote) {
@@ -154,8 +154,8 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_ledger: 'mock:',
-          destination_ledger: 'http://red.example',
+          source_address: 'mock',
+          destination_address: 'example.red',
           destination_amount: '1'
         })
         .reply(200, {
@@ -163,7 +163,7 @@ describe('Client', function () {
           source_connector_account: 'mock/connector'
         })
       this.client.quote({
-        destinationLedger: 'http://red.example',
+        destinationAddress: 'example.red',
         destinationAmount: '1'
       })
       .then(function (quote) {
@@ -180,14 +180,14 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_ledger: 'mock:',
-          destination_ledger: 'http://red.example',
+          source_address: 'mock',
+          destination_address: 'example.red',
           destination_amount: '1'
         })
         .reply(422, {id: 'AssetsNotTradedError', message: 'broken'})
 
       this.client.quote({
-        destinationLedger: 'http://red.example',
+        destinationAddress: 'example.red',
         destinationAmount: '1'
       }).then(function (quote) {
         assert.strictEqual(quote, undefined)
@@ -223,8 +223,8 @@ describe('Client', function () {
         nock('http://connector1.example')
           .get('/quote')
           .query({
-            source_ledger: 'mock:',
-            destination_ledger: 'http://red.example',
+            source_address: 'mock',
+            destination_address: 'example.red',
             destination_amount: '1'
           })
           .reply(200, Object.assign(info.connector1, {
@@ -233,8 +233,8 @@ describe('Client', function () {
         nock('http://connector2.example')
           .get('/quote')
           .query({
-            source_ledger: 'mock:',
-            destination_ledger: 'http://red.example',
+            source_address: 'mock',
+            destination_address: 'example.red',
             destination_amount: '1'
           })
           .reply(200, Object.assign(info.connector2, {
@@ -242,7 +242,7 @@ describe('Client', function () {
           }))
 
         assert.deepEqual(yield this.client.quote({
-          destinationLedger: 'http://red.example',
+          destinationAddress: 'example.red',
           destinationAmount: '1'
         }), info.quote)
       })
@@ -265,8 +265,8 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'http://red.example',
-        destinationAccount: 'http://red.example/bob',
+        destinationLedger: 'example.red',
+        destinationAccount: 'example.red.bob',
         destinationMemo: {
           foo: 'bar'
         },
@@ -283,8 +283,8 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'http://red.example',
-        destinationAccount: 'http://red.example/bob',
+        destinationLedger: 'example.red',
+        destinationAccount: 'example.red.bob',
         destinationMemo: {
           foo: 'bar'
         },
@@ -303,27 +303,23 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'http://red.example',
-        destinationAccount: 'http://red.example/bob',
-        destinationMemo: {
-          foo: 'bar'
-        },
+        destinationLedger: 'example.red',
+        destinationAccount: 'example.red.bob',
+        destinationMemo: { foo: 'bar' },
         executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
         expiresAt: '2016-07-02T00:00:00.000Z'
       })
       .then(function () {
         assert.calledWithMatch(spy, {
-          ledger: 'mock:',
+          ledger: 'mock',
           account: 'connector',
           amount: '1',
           data: {
             ilp_header: {
-              account: 'http://red.example/bob',
-              ledger: 'http://red.example',
+              account: 'example.red.bob',
+              ledger: 'example.red',
               amount: '2',
-              data: {
-                foo: 'bar'
-              }
+              data: { foo: 'bar' }
             }
           },
           executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
@@ -342,21 +338,21 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'http://red.example',
-        destinationAccount: 'http://red.example/bob',
+        destinationLedger: 'example.red',
+        destinationAccount: 'example.red.bob',
         destinationMemo: {
           foo: 'bar'
         }
       })
       .then(function () {
         assert.calledWithMatch(spy, {
-          ledger: 'mock:',
+          ledger: 'mock',
           account: 'connector',
           amount: '1',
           data: {
             ilp_header: {
-              account: 'http://red.example/bob',
-              ledger: 'http://red.example',
+              account: 'example.red.bob',
+              ledger: 'example.red',
               amount: '2',
               data: {
                 foo: 'bar'

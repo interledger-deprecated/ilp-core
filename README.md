@@ -19,6 +19,7 @@ const Client = require('ilp-core').Client
 
 const client = new Client({
   plugin: require('ilp-plugin-bells'),
+  prefix: 'ilpdemo.red',
   auth: {
     account: 'https://red.ilpdemo.org/ledger/accounts/alice',
     password: 'alice'
@@ -29,8 +30,8 @@ client.connect()
 yield client.connect()
 
 const payment = {
-  destinationAccount: 'https://blue.ilpdemo.org/ledger/accounts/bob',
-  destinationLedger: 'https://blue.ilpdemo.org/ledger',
+  destinationAccount: 'ilpdemo.blue.bob',
+  destinationLedger: 'ilpdemo.blue',
   destinationAmount: '1',
   destinationMemo: {
     myKey: 'myValue'
@@ -41,7 +42,7 @@ const payment = {
 
 client.waitForConnection().then(() => {
   client.quote({
-    destinationLedger: payment.destinationLedger,
+    destinationAddress: payment.destinationAccount,
     destinationAmount: payment.destinationAmount
   })
   .then((quote) => {
@@ -72,6 +73,7 @@ const Client = require('ilp-core').Client
 
 const client = new Client({
   plugin: require('ilp-plugin-bells'),
+  prefix: 'ilpdemo.red',
   auth: {
     account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
     password: 'bobbob'
@@ -114,6 +116,7 @@ class MyExtension {
 
 const client = new Client({
   plugin: require('ilp-plugin-bells'),
+  prefix: 'ilpdemo.red',
   auth: {
     account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
     password: 'bobbob'
