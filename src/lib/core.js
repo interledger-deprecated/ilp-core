@@ -53,9 +53,8 @@ class Core extends EventEmitter {
       this.clients[prefix] = client
     }
 
-    client.onAny(function * (event, arg1, arg2, arg3) {
-      yield this.emitAsync(event, client, arg1, arg2, arg3)
-    })
+    client.onAny((event, arg1, arg2, arg3) =>
+      this.emitAsync(event, client, arg1, arg2, arg3))
   }
 
   connect () {

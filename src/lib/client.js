@@ -24,7 +24,6 @@ class Client extends EventEmitter {
     this.plugin = new Plugin(opts)
     this.connecting = false
 
-    const _this = this
     this.plugin
       .on('receive', (transfer) => this.emitAsync('receive', transfer))
       .on('fulfill_execution_condition', (transfer, fulfillment) =>
