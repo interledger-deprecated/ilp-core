@@ -21,6 +21,11 @@ class Core extends EventEmitter {
     return null
   }
 
+  resolvePlugin (address) {
+    const client = this.resolve(address)
+    return client && client.getPlugin()
+  }
+
   /**
    * @param {String} address
    * @returns {Boolean}
@@ -40,14 +45,16 @@ class Core extends EventEmitter {
   addClient (client) {
     this.clientList.push(client)
 
+    /*
     const prefixes = makeAddressPrefixes(client.plugin.getPrefix())
+    */
+    const prefixes = makeAddressPrefixes(client.plugin.id)
     for (const prefix of prefixes) {
       this.clients[prefix] = client
     }
 
-    const _this = this
     client.onAny(function * (event, arg1, arg2, arg3) {
-      yield _this.emitAsync.call(_this, event, client, arg1, arg2, arg3)
+      yield this.emitAsync(event, client, arg1, arg2, arg3)
     })
   }
 
@@ -65,9 +72,12 @@ class Core extends EventEmitter {
  * @returns {String[]} Returns a list of address prefixes, longest-to-shortest.
  */
 function makeAddressPrefixes (address) {
+  return [address]
+  /*
   const parts = address.split('.')
   const partCount = parts.length
   return parts.map((_, i) => parts.slice(0, partCount - i).join('.'))
+  */
 }
 
 module.exports = Core
