@@ -215,6 +215,11 @@ describe('Client', function () {
         connector1: {source_amount: '2', destination_amount: '1'},
         connector2: {source_amount: '1', destination_amount: '1'},
         quote: {sourceAmount: '1', destinationAmount: '1', connectorAccount: 'connector2'}
+      },
+      {
+        connector1: {source_amount: '1', destination_amount: '2'},
+        connector2: {source_amount: '1', destination_amount: '1'},
+        quote: {sourceAmount: '1', destinationAmount: '2', connectorAccount: 'connector1'}
       }
     ].forEach(function (info) {
       it('returns the cheapest quote', function * () {

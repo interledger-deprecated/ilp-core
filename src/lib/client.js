@@ -180,7 +180,7 @@ function getCheaperQuote (quote1, quote2) {
     return quote1
   }
   if ((new BigNumber(quote1.destination_amount))
-      .lessThan(quote2.destination_amount)) {
+      .greaterThan(quote2.destination_amount)) {
     return quote1
   }
   return quote2
