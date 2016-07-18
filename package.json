@@ -57,7 +57,7 @@
   "dependencies": {
     "bignumber.js": "^2.3.0",
     "co": "^4.6.0",
-    "eventemitter2": "^1.0.3",
+    "eventemitter2": "^2.0.0",
     "lodash": "^4.13.1",
     "superagent": "^2.0.0",
     "uuid": "^2.0.2"

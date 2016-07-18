@@ -26,11 +26,12 @@ class Client extends EventEmitter {
     this.plugin = new Plugin(opts)
     this.connecting = false
 
-    this.plugin.on('receive', (transfer) => this.emit('receive', transfer))
-    this.plugin.on('fulfill_execution_condition', (transfer, fulfillment) =>
-      this.emit('fulfill_execution_condition', transfer, fulfillment))
-    this.plugin.on('fulfill_cancellation_condition', (transfer, fulfillment) =>
-      this.emit('fulfill_cancellation_condition', transfer, fulfillment))
+    this.plugin
+      .on('receive', (transfer) => this.emitAsync('receive', transfer))
+      .on('fulfill_execution_condition', (transfer, fulfillment) =>
+        this.emitAsync('fulfill_execution_condition', transfer, fulfillment))
+      .on('fulfill_cancellation_condition', (transfer, fulfillment) =>
+        this.emitAsync('fulfill_cancellation_condition', transfer, fulfillment))
 
     this._extensions = {}
   }
