@@ -17,11 +17,11 @@ class Client extends EventEmitter {
       throw new TypeError('Client options must be an object')
     }
 
-    if (typeof opts.type !== 'string' || !opts.type.length) {
-      throw new TypeError('Plugin type must be a non-empty string')
+    if (typeof opts.plugin !== 'function') {
+      throw new TypeError('"plugin" must be a function')
     }
 
-    const Plugin = require('ilp-plugin-' + opts.type)
+    const Plugin = opts.plugin
 
     this.plugin = new Plugin(opts)
     this.connecting = false
