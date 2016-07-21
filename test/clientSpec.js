@@ -8,25 +8,15 @@ chai.use(chaiAsPromised)
 const assert = chai.assert
 const nock = require('nock')
 
-const mockRequire = require('mock-require')
-
 const ilpCore = require('..')
 const Client = ilpCore.Client
 const MockPlugin = require('./mocks/mock-plugin')
 
 describe('Client', function () {
-  beforeEach(function () {
-    mockRequire('ilp-plugin-mock', MockPlugin)
-  })
-
-  afterEach(function () {
-    mockRequire.stopAll()
-  })
-
   describe('constructor', function () {
     it('should instantiate the ledger plugin', function () {
       const client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
 
       assert.instanceOf(client, Client)
@@ -36,19 +26,19 @@ describe('Client', function () {
     it('should fail if the ledger plugin does not exist', function () {
       assert.throws(() => {
         return new Client({
-          type: 'fake',
+          plugin: null,
           auth: {
             mock: true
           }
         })
-      }, 'Cannot find module \'ilp-plugin-fake\'')
+      }, '"plugin" must be a function')
     })
   })
 
   describe('connect', function () {
     it('should call connect on the plugin', function * () {
       const client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
       const stubConnect = sinon.stub(client.getPlugin(), 'connect')
 
@@ -62,7 +52,7 @@ describe('Client', function () {
   describe('disconnect', function () {
     it('should call disconnect on the plugin', function * () {
       const client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
       const stubDisconnect = sinon.stub(client.getPlugin(), 'disconnect')
 
@@ -76,7 +66,7 @@ describe('Client', function () {
   describe('fulfillCondition', function () {
     it('should call fulfillCondition on the plugin', function * () {
       const client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
       const stubDisconnect = sinon.stub(client.getPlugin(), 'fulfillCondition')
 
@@ -91,7 +81,7 @@ describe('Client', function () {
   describe('waitForConnection', function () {
     it('should return a rejected promise if not currently connecting', function * () {
       const client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
 
       client.disconnect()
@@ -104,7 +94,7 @@ describe('Client', function () {
   describe('quote', function () {
     beforeEach(function () {
       this.client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
     })
 
@@ -262,7 +252,7 @@ describe('Client', function () {
   describe('sendQuotedPayment', function () {
     beforeEach(function () {
       this.client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
     })
 
@@ -383,7 +373,7 @@ describe('Client', function () {
   describe('use', function () {
     beforeEach(function () {
       this.client = new Client({
-        type: 'mock'
+        plugin: MockPlugin
       })
     })
 

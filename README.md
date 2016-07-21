@@ -18,7 +18,7 @@ npm install --save ilp-core ilp-plugin-bells
 import { Client } from 'ilp-core'
 
 const client = new Client({
-  type: 'bells',
+  plugin: require('ilp-plugin-bells'),
   auth: {
     account: 'https://red.ilpdemo.org/ledger/accounts/alice',
     password: 'alice'
@@ -67,7 +67,7 @@ client.on('fulfill_execution_condition', (transfer, fulfillment) => {
 import { Client } from 'ilp-core'
 
 const client = new Client({
-  type: 'bells',
+  plugin: require('ilp-plugin-bells'),
   auth: {
     account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
     password: 'bobbob'
@@ -109,7 +109,7 @@ class MyExtension {
 }
 
 const client = new Client({
-  type: 'bells',
+  plugin: require('ilp-plugin-bells'),
   auth: {
     account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
     password: 'bobbob'
