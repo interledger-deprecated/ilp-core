@@ -15,7 +15,7 @@ npm install --save ilp-core ilp-plugin-bells
 ### Sending a Payment
 
 ``` js
-import { Client } from 'ilp-core'
+const Client = require('ilp-core').Client
 
 const client = new Client({
   plugin: require('ilp-plugin-bells'),
@@ -24,6 +24,7 @@ const client = new Client({
     password: 'alice'
   }
 })
+client.connect()
 
 yield client.connect()
 
@@ -35,22 +36,25 @@ const payment = {
     myKey: 'myValue'
   },
   executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
-  expiresAt: (new Date(Date.now() + 4000)).toISOString()
+  expiresAt: (new Date(Date.now() + 10000)).toISOString()
 }
 
-client.quote({
-  destinationLedger: payment.destinationLedger,
-  destinationAmount: payment.destinationAmount
-})
-.then((quote) => {
-  return client.sendQuotedPayment(Object.assign({}, payment, quote))
-})
-.then(() => {
-  console.log('payment sent')
+client.waitForConnection().then(() => {
+  client.quote({
+    destinationLedger: payment.destinationLedger,
+    destinationAmount: payment.destinationAmount
+  })
+  .then((quote) => {
+    return client.sendQuotedPayment(Object.assign({}, payment, quote))
+  })
+  .then(() => {
+    console.log('payment sent')
+  })
 })
 .catch((err) => {
   console.log(err)
 })
+
 
 client.on('fulfill_execution_condition', (transfer, fulfillment) => {
   console.log('transfer fulfilled', fulfillment)
@@ -64,7 +68,7 @@ client.on('fulfill_execution_condition', (transfer, fulfillment) => {
 **Note that the `receive` event is fired for conditional transfers, so the event does not necessarily indicate that funds have been transferred**
 
 ``` js
-import { Client } from 'ilp-core'
+const Client = require('ilp-core').Client
 
 const client = new Client({
   plugin: require('ilp-plugin-bells'),
@@ -74,7 +78,7 @@ const client = new Client({
   }
 })
 
-yield client.connect()
+client.connect()
 
 client.on('receive', (transfer) => {
   console.log(transfer)
@@ -87,7 +91,7 @@ client.on('receive', (transfer) => {
 To extend the functionality of the `Client`:
 
 ```js
-import { Client } from 'ilp-core'
+const Client = require('ilp-core').Client
 
 class MyExtension {
   constructor (client) {
