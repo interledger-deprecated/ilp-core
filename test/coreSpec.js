@@ -42,11 +42,13 @@ describe('Core', function () {
       assert.equal(this.core.resolve('ledger2.bob'), client2)
     })
 
-    it.skip('returns the corresponding Client for a remote address, if a route exists', function () {
+    it('returns the corresponding Client for a remote address, if a route exists', function () {
       const client1 = new MockClient({prefix: 'ledger1'})
       this.core.addClient('ledger1', client1)
-      this.core.addRoute('ledger2', 'http://mark.mock', 'ledger1')
+      this.core.addRoute('ledger2', 'http://mark.mock', 'ledger1.mark')
+      assert.equal(this.core.resolve('ledger2'), client1)
       assert.equal(this.core.resolve('ledger2.bob'), client1)
+      assert.equal(this.core.resolve('ledger2.bob.phone'), client1)
     })
 
     it('returns null if no Client matches', function () {

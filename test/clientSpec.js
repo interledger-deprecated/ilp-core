@@ -265,7 +265,6 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'example.red',
         destinationAccount: 'example.red.bob',
         destinationMemo: {
           foo: 'bar'
@@ -283,7 +282,6 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'example.red',
         destinationAccount: 'example.red.bob',
         destinationMemo: {
           foo: 'bar'
@@ -303,7 +301,6 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'example.red',
         destinationAccount: 'example.red.bob',
         destinationMemo: { foo: 'bar' },
         executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
@@ -311,13 +308,11 @@ describe('Client', function () {
       })
       .then(function () {
         assert.calledWithMatch(spy, {
-          ledger: 'mock',
           account: 'connector',
           amount: '1',
           data: {
             ilp_header: {
               account: 'example.red.bob',
-              ledger: 'example.red',
               amount: '2',
               data: { foo: 'bar' }
             }
@@ -338,7 +333,6 @@ describe('Client', function () {
         connectorAccount: 'connector',
         sourceAmount: '1',
         destinationAmount: '2',
-        destinationLedger: 'example.red',
         destinationAccount: 'example.red.bob',
         destinationMemo: {
           foo: 'bar'
@@ -346,13 +340,11 @@ describe('Client', function () {
       })
       .then(function () {
         assert.calledWithMatch(spy, {
-          ledger: 'mock',
           account: 'connector',
           amount: '1',
           data: {
             ilp_header: {
               account: 'example.red.bob',
-              ledger: 'example.red',
               amount: '2',
               data: {
                 foo: 'bar'

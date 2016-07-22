@@ -89,7 +89,7 @@ class Client extends EventEmitter {
    * @param  {String} [params.sourceAmount] Either the sourceAmount or destinationAmount must be specified
    * @param  {String} [params.destinationAmount] Either the sourceAmount or destinationAmount must be specified
    * @param  {String} params.destinationAddress Recipient's ledger
-   * @param  {String} [params.destinationPrecision] Must be provided for ledgers that are not adjacent to the quoting connector.
+   * @param  {String} [params.destinationPrecision] Must be provided for ledgers that are not adjacent to the quoting connector when quoting by source amount.
    * @param  {String} [params.destinationScale]
    * @return {Object} Object including the amount that was not specified
    */
@@ -128,7 +128,6 @@ class Client extends EventEmitter {
    * @param  {String} params.sourceAmount Amount to send
    * @param  {String} params.destinationAmount Amount recipient will receive
    * @param  {String} params.destinationAccount Recipient's account
-   * @param  {String} params.destinationLedger Recipient's ledger
    * @param  {String} params.connectorAccount First connector's account on the source ledger (from the quote)
    * @param  {Object} params.destinationMemo Memo for the recipient to be included with the payment
    * @param  {String} params.expiresAt Payment expiry timestamp
@@ -146,26 +145,22 @@ class Client extends EventEmitter {
 
     // TODO throw errors if other fields are not specified
 
-    return this.plugin.getPrefix().then((prefix) => {
-      const transfer = omitUndefined({
-        id: uuid.v4(),
-        ledger: prefix,
-        account: params.connectorAccount,
-        amount: params.sourceAmount,
-        data: {
-          ilp_header: omitUndefined({
-            account: params.destinationAccount,
-            ledger: params.destinationLedger,
-            amount: params.destinationAmount,
-            data: params.destinationMemo
-          })
-        },
-        executionCondition: params.executionCondition,
-        expiresAt: params.expiresAt
-      })
-
-      return this.plugin.send(transfer)
+    const transfer = omitUndefined({
+      id: uuid.v4(),
+      account: params.connectorAccount,
+      amount: params.sourceAmount,
+      data: {
+        ilp_header: omitUndefined({
+          account: params.destinationAccount,
+          amount: params.destinationAmount,
+          data: params.destinationMemo
+        })
+      },
+      executionCondition: params.executionCondition,
+      expiresAt: params.expiresAt
     })
+
+    return this.plugin.send(transfer)
   }
 }
 
