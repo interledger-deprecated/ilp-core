@@ -134,6 +134,7 @@ class Client extends EventEmitter {
    * @param  {Object} params.destinationMemo Memo for the recipient to be included with the payment
    * @param  {String} params.expiresAt Payment expiry timestamp
    * @param  {String} params.executionCondition Crypto condition
+   * @param  {String} [params.uuid] Unique identifier for the transfer.
    * @return {Promise.<Object>} Resolves when the payment has been submitted to the plugin
    */
   sendQuotedPayment (params) {
@@ -148,7 +149,7 @@ class Client extends EventEmitter {
     // TODO throw errors if other fields are not specified
 
     const transfer = omitUndefined({
-      id: uuid.v4(),
+      id: params.uuid || uuid.v4(),
       account: params.connectorAccount,
       amount: params.sourceAmount,
       data: {

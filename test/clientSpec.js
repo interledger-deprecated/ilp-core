@@ -335,10 +335,12 @@ describe('Client', function () {
         destinationAccount: 'example.red.bob',
         destinationMemo: { foo: 'bar' },
         executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
-        expiresAt: '2016-07-02T00:00:00.000Z'
+        expiresAt: '2016-07-02T00:00:00.000Z',
+        uuid: 'abcdef'
       })
       .then(function () {
         assert.calledWithMatch(spy, {
+          id: 'abcdef',
           account: 'connector',
           amount: '1',
           data: {
