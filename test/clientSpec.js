@@ -124,6 +124,37 @@ describe('Client', function () {
       })
     })
 
+    it('supports expiry durations', function (done) {
+      nock('http://connector.example')
+        .get('/quote')
+        .query({
+          source_address: 'mock',
+          destination_address: 'example.red',
+          source_amount: '1',
+          destination_expiry_duration: '4'
+        })
+        .reply(200, {
+          destination_amount: '1',
+          source_connector_account: 'mock/connector',
+          source_expiry_duration: '5',
+          destination_expiry_duration: '4'
+        })
+      this.client.quote({
+        destinationAddress: 'example.red',
+        sourceAmount: '1',
+        destinationExpiryDuration: 4
+      })
+      .then(function (quote) {
+        assert.deepEqual(quote, {
+          destinationAmount: '1',
+          connectorAccount: 'mock/connector',
+          sourceExpiryDuration: '5'
+        })
+        done()
+      })
+      .catch(done)
+    })
+
     it('should get fixed sourceAmount quotes', function (done) {
       nock('http://connector.example')
         .get('/quote')

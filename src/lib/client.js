@@ -89,6 +89,7 @@ class Client extends EventEmitter {
    * @param  {String} [params.sourceAmount] Either the sourceAmount or destinationAmount must be specified
    * @param  {String} [params.destinationAmount] Either the sourceAmount or destinationAmount must be specified
    * @param  {String} params.destinationAddress Recipient's ledger
+   * @param  {Number} [params.destinationExpiryDuration] Number of seconds between when the destination transfer is proposed and when it expires.
    * @param  {String} [params.destinationPrecision] Must be provided for ledgers that are not adjacent to the quoting connector when quoting by source amount.
    * @param  {String} [params.destinationScale]
    * @return {Object} Object including the amount that was not specified
@@ -105,6 +106,7 @@ class Client extends EventEmitter {
         source_amount: params.sourceAmount,
         destination_address: params.destinationAddress,
         destination_amount: params.destinationAmount,
+        destination_expiry_duration: params.destinationExpiryDuration,
         destination_precision: params.destinationPrecision,
         destination_scale: params.destinationScale
       }
