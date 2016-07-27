@@ -5,7 +5,7 @@ const EventEmitter = require('eventemitter2')
 class MockPlugin extends EventEmitter {
   constructor () {
     super()
-    this.prefix = 'mock'
+    this.prefix = 'mock.'
     this.host = 'mock:'
   }
 

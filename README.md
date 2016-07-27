@@ -22,8 +22,8 @@ const core = new Core()
 core.addClient('ilpdemo.red',
   new Client({
     plugin: require('ilp-plugin-bells'),
-    prefix: 'ilpdemo.red',
     auth: {
+      prefix: 'ilpdemo.red',
       account: 'https://red.ilpdemo.org/ledger/accounts/alice',
       password: 'alice'
     }
@@ -45,7 +45,7 @@ const payment = {
   expiresAt: (new Date(Date.now() + 10000)).toISOString()
 }
 
-const client = core.resolve('ilpdemo.red')
+const client = core.resolveClient('ilpdemo.red')
 client.waitForConnection().then(() => {
   return client.quote({
     destinationAddress: payment.destinationAccount,
@@ -108,8 +108,8 @@ class MyExtension {
 
 const client = new Client({
   plugin: require('ilp-plugin-bells'),
-  prefix: 'ilpdemo.red',
   auth: {
+    prefix: 'ilpdemo.red',
     account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
     password: 'bobbob'
   }

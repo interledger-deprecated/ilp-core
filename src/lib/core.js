@@ -17,11 +17,15 @@ class Core extends EventEmitter {
   }
 
   /**
+   * `resolveClient`/`resolvePlugin` will find the Client/Plugin corresponding
+   * to either a local or a remote address (e.g. "us.fed.wf.alice").
+   *
    * @param {IlpAddress} address
    * @returns {Client|null}
    */
-  resolve (address) {
+  resolveClient (address) {
     const prefixes = makeAddressPrefixes(address)
+
     for (const prefix of prefixes) {
       // Local route
       const localClient = this.clients[prefix]
@@ -29,7 +33,7 @@ class Core extends EventEmitter {
 
       // Remote route
       const nextHop = this._findBestHopForSourceAmount(prefix)
-      if (nextHop) return this.resolve(nextHop.bestRoute.sourceAccount)
+      if (nextHop) return this.resolveClient(nextHop.bestRoute.sourceAccount)
     }
     // No route to account
     return null
@@ -40,7 +44,30 @@ class Core extends EventEmitter {
    * @returns {LedgerPlugin|null}
    */
   resolvePlugin (address) {
-    const client = this.resolve(address)
+    const client = this.resolveClient(address)
+    return client && client.getPlugin()
+  }
+
+  /**
+   * `getClient`/`getPlugin` will find the Client/Plugin corresponding
+   * to either a local ledger address (e.g. "us.fed.wf.").
+   *
+   * @param {IlpAddress} address
+   * @returns {Client|null}
+   */
+  getClient (ledger) {
+    if (ledger.slice(-1) !== '.') {
+      throw new Error('prefix must end with "."')
+    }
+    return this.clients[ledger] || null
+  }
+
+  /**
+   * @param {IlpAddress} address
+   * @returns {LedgerPlugin|null}
+   */
+  getPlugin (ledger) {
+    const client = this.getClient(ledger)
     return client && client.getPlugin()
   }
 
@@ -66,6 +93,10 @@ class Core extends EventEmitter {
    * @param {Client} client
    */
   addClient (prefix, client) {
+    if (prefix.slice(-1) !== '.') {
+      throw new Error('prefix must end with "."')
+    }
+
     client.onAny((event, arg1, arg2, arg3) =>
       this.emitAsync(event, client, arg1, arg2, arg3))
     this.clientList.push(client)
@@ -84,14 +115,14 @@ class Core extends EventEmitter {
    * Used by a client to populate remote routes. Connectors should use the
    * RoutingTables API directly.
    *
-   * @param {IlpAddress} destinationAddress
+   * @param {IlpAddress} destinationLedger (e.g. "us.fed.wf.")
    * @param {String} nextHop
-   * @param {IlpAddress} connectorSourceAddress
+   * @param {IlpAddress} connectorSourceAddress (e.g. "us.fed.wf.mark")
    */
-  addRoute (destinationAddress, nextHop, connectorSourceAddress) {
+  addRoute (destinationLedger, nextHop, connectorSourceAddress) {
     this.tables.addLocalRoutes([{
       source_ledger: '*',
-      destination_ledger: destinationAddress,
+      destination_ledger: destinationLedger,
       connector: nextHop,
       source_account: connectorSourceAddress,
       points: [[0, 0], [1, 1]]
@@ -116,7 +147,8 @@ class Core extends EventEmitter {
 function makeAddressPrefixes (address) {
   const parts = address.split('.')
   const partCount = parts.length
-  return parts.map((_, i) => parts.slice(0, partCount - i).join('.'))
+  return parts.map((_, i) =>
+    parts.slice(0, partCount - i).join('.') + '.')
 }
 
 module.exports = Core

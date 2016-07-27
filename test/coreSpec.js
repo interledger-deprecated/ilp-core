@@ -32,36 +32,36 @@ describe('Core', function () {
     })
   })
 
-  describe('resolve', function () {
+  describe('resolveClient', function () {
     it('returns the corresponding Client for a local address', function () {
-      const client1 = new MockClient({prefix: 'ledger1'})
-      const client2 = new MockClient({prefix: 'ledger2'})
-      this.core.addClient('ledger1', client1)
-      this.core.addClient('ledger2', client2)
-      assert.equal(this.core.resolve('ledger1.alice'), client1)
-      assert.equal(this.core.resolve('ledger2.bob'), client2)
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      const client2 = new MockClient({prefix: 'ledger2.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addClient('ledger2.', client2)
+      assert.equal(this.core.resolveClient('ledger1.alice'), client1)
+      assert.equal(this.core.resolveClient('ledger2.bob'), client2)
     })
 
     it('returns the corresponding Client for a remote address, if a route exists', function () {
-      const client1 = new MockClient({prefix: 'ledger1'})
-      this.core.addClient('ledger1', client1)
-      this.core.addRoute('ledger2', 'http://mark.mock', 'ledger1.mark')
-      assert.equal(this.core.resolve('ledger2'), client1)
-      assert.equal(this.core.resolve('ledger2.bob'), client1)
-      assert.equal(this.core.resolve('ledger2.bob.phone'), client1)
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addRoute('ledger2.', 'http://mark.mock', 'ledger1.mark')
+      assert.equal(this.core.resolveClient('ledger2'), client1)
+      assert.equal(this.core.resolveClient('ledger2.bob'), client1)
+      assert.equal(this.core.resolveClient('ledger2.bob.phone'), client1)
     })
 
     it('returns null if no Client matches', function () {
-      assert.strictEqual(this.core.resolve('ledger1'), null)
+      assert.strictEqual(this.core.resolveClient('ledger1'), null)
     })
   })
 
   describe('resolvePlugin', function () {
     it('returns the corresponding plugin', function () {
-      const client1 = new MockClient({prefix: 'ledger1'})
-      const client2 = new MockClient({prefix: 'ledger2'})
-      this.core.addClient('ledger1', client1)
-      this.core.addClient('ledger2', client2)
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      const client2 = new MockClient({prefix: 'ledger2.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addClient('ledger2.', client2)
       assert.equal(this.core.resolvePlugin('ledger1.alice'), client1.plugin)
       assert.equal(this.core.resolvePlugin('ledger2.bob'), client2.plugin)
     })
@@ -71,9 +71,58 @@ describe('Core', function () {
     })
   })
 
+  describe('getClient', function () {
+    it('returns the corresponding Client for a local address', function () {
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      const client2 = new MockClient({prefix: 'ledger2.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addClient('ledger2.', client2)
+      assert.equal(this.core.getClient('ledger1.'), client1)
+      assert.equal(this.core.getClient('ledger2.'), client2)
+    })
+
+    it('does not return remote clients', function () {
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addRoute('ledger2.', 'http://mark.mock', 'ledger1.mark')
+      assert.strictEqual(this.core.getClient('ledger2.'), null)
+    })
+
+    it('throws if the ledger doesn\'t end with "."', function () {
+      assert.throws(() => {
+        this.core.getClient('ledger1')
+      }, 'prefix must end with "."')
+    })
+
+    it('returns null if no local Client matches', function () {
+      assert.strictEqual(this.core.getClient('ledger3.'), null)
+    })
+  })
+
+  describe('getPlugin', function () {
+    it('returns the corresponding plugin', function () {
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      const client2 = new MockClient({prefix: 'ledger2.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addClient('ledger2.', client2)
+      assert.equal(this.core.getPlugin('ledger1.'), client1.plugin)
+      assert.equal(this.core.getPlugin('ledger2.'), client2.plugin)
+    })
+
+    it('throws if the ledger doesn\'t end with "."', function () {
+      assert.throws(() => {
+        this.core.getPlugin('ledger1')
+      }, 'prefix must end with "."')
+    })
+
+    it('returns null if there is no match', function () {
+      assert.strictEqual(this.core.getPlugin('ledger3.'), null)
+    })
+  })
+
   describe('isLocalAddress', function () {
     it('returns true if a client matches', function () {
-      this.core.addClient('ledger1', new MockClient({prefix: 'ledger1'}))
+      this.core.addClient('ledger1.', new MockClient({prefix: 'ledger1.'}))
       assert.strictEqual(this.core.isLocalAddress('ledger1.alice'), true)
     })
 
@@ -84,10 +133,10 @@ describe('Core', function () {
 
   describe('getClients', function () {
     it('returns a list of clients', function () {
-      const client1 = new MockClient({prefix: 'ledger1'})
-      const client2 = new MockClient({prefix: 'ledger2'})
-      this.core.addClient('ledger1', client1)
-      this.core.addClient('ledger2', client2)
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      const client2 = new MockClient({prefix: 'ledger2.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addClient('ledger2.', client2)
       assert.deepEqual(this.core.getClients(), [client1, client2])
     })
 
@@ -98,8 +147,8 @@ describe('Core', function () {
 
   describe('addClient', function () {
     it('propagates events', function (done) {
-      const client1 = new MockClient({prefix: 'ledger1'})
-      this.core.addClient('ledger1', client1)
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      this.core.addClient('ledger1.', client1)
       this.core.on('foobar', function (client, arg1, arg2, arg3) {
         assert.equal(client, client1)
         assert.equal(arg1, 1)
@@ -109,14 +158,21 @@ describe('Core', function () {
       })
       client1.emit('foobar', 1, 2, 3)
     })
+
+    it('throws if the prefix is not a ledger', function () {
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      assert.throws(() => {
+        this.core.addClient('ledger1', client1)
+      }, 'prefix must end with "."')
+    })
   })
 
   describe('connect', function () {
     it('connects all clients', function * () {
-      const client1 = new MockClient({prefix: 'ledger1'})
-      const client2 = new MockClient({prefix: 'ledger2'})
-      this.core.addClient('ledger1', client1)
-      this.core.addClient('ledger2', client2)
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      const client2 = new MockClient({prefix: 'ledger2.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addClient('ledger2.', client2)
 
       const spy1 = sinon.spy(client1, 'connect')
       const spy2 = sinon.spy(client2, 'connect')
@@ -128,10 +184,10 @@ describe('Core', function () {
 
   describe('disconnect', function () {
     it('disconnects all clients', function * () {
-      const client1 = new MockClient({prefix: 'ledger1'})
-      const client2 = new MockClient({prefix: 'ledger2'})
-      this.core.addClient('ledger1', client1)
-      this.core.addClient('ledger2', client2)
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      const client2 = new MockClient({prefix: 'ledger2.'})
+      this.core.addClient('ledger1.', client1)
+      this.core.addClient('ledger2.', client2)
 
       const spy1 = sinon.spy(client1, 'disconnect')
       const spy2 = sinon.spy(client2, 'disconnect')
