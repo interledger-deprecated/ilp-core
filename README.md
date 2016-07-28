@@ -12,25 +12,31 @@ npm install --save ilp-core ilp-plugin-bells
 
 ## Usage
 
-### Sending a Payment
+### Setup
 
 ``` js
 const Client = require('ilp-core').Client
+const Core = require('ilp-core').Core
 
-const client = new Client({
-  plugin: require('ilp-plugin-bells'),
-  auth: {
-    account: 'https://red.ilpdemo.org/ledger/accounts/alice',
-    password: 'alice'
-  }
-})
-client.connect()
+const core = new Core()
+core.addClient('ilpdemo.red',
+  new Client({
+    plugin: require('ilp-plugin-bells'),
+    auth: {
+      prefix: 'ilpdemo.red',
+      account: 'https://red.ilpdemo.org/ledger/accounts/alice',
+      password: 'alice'
+    }
+  }))
 
-yield client.connect()
+core.connect()
+```
 
+### Sending a Payment
+
+``` js
 const payment = {
-  destinationAccount: 'https://blue.ilpdemo.org/ledger/accounts/bob',
-  destinationLedger: 'https://blue.ilpdemo.org/ledger',
+  destinationAccount: 'ilpdemo.blue.bob',
   destinationAmount: '1',
   destinationMemo: {
     myKey: 'myValue'
@@ -39,9 +45,10 @@ const payment = {
   expiresAt: (new Date(Date.now() + 10000)).toISOString()
 }
 
+const client = core.resolveClient('ilpdemo.red')
 client.waitForConnection().then(() => {
-  client.quote({
-    destinationLedger: payment.destinationLedger,
+  return client.quote({
+    destinationAddress: payment.destinationAccount,
     destinationAmount: payment.destinationAmount
   })
   .then((quote) => {
@@ -55,10 +62,9 @@ client.waitForConnection().then(() => {
   console.log(err)
 })
 
-
-client.on('fulfill_execution_condition', (transfer, fulfillment) => {
+core.on('fulfill_execution_condition', (client, transfer, fulfillment) => {
   console.log('transfer fulfilled', fulfillment)
-  client.disconnect()
+  core.disconnect()
 })
 
 ```
@@ -68,19 +74,7 @@ client.on('fulfill_execution_condition', (transfer, fulfillment) => {
 **Note that the `receive` event is fired for conditional transfers, so the event does not necessarily indicate that funds have been transferred**
 
 ``` js
-const Client = require('ilp-core').Client
-
-const client = new Client({
-  plugin: require('ilp-plugin-bells'),
-  auth: {
-    account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
-    password: 'bobbob'
-  }
-})
-
-client.connect()
-
-client.on('receive', (transfer) => {
+core.on('receive', (client, transfer) => {
   console.log(transfer)
   client.fulfillCondition(transfer.id, 'cf:0:')
 })
@@ -115,6 +109,7 @@ class MyExtension {
 const client = new Client({
   plugin: require('ilp-plugin-bells'),
   auth: {
+    prefix: 'ilpdemo.red',
     account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
     password: 'bobbob'
   }

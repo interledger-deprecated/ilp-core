@@ -26,11 +26,12 @@ class Client extends EventEmitter {
     this.plugin = new Plugin(opts)
     this.connecting = false
 
-    this.plugin.on('receive', (transfer) => this.emit('receive', transfer))
-    this.plugin.on('fulfill_execution_condition', (transfer, fulfillment) =>
-      this.emit('fulfill_execution_condition', transfer, fulfillment))
-    this.plugin.on('fulfill_cancellation_condition', (transfer, fulfillment) =>
-      this.emit('fulfill_cancellation_condition', transfer, fulfillment))
+    this.plugin
+      .on('receive', (transfer) => this.emitAsync('receive', transfer))
+      .on('fulfill_execution_condition', (transfer, fulfillment) =>
+        this.emitAsync('fulfill_execution_condition', transfer, fulfillment))
+      .on('fulfill_cancellation_condition', (transfer, fulfillment) =>
+        this.emitAsync('fulfill_cancellation_condition', transfer, fulfillment))
 
     this._extensions = {}
   }
@@ -80,14 +81,17 @@ class Client extends EventEmitter {
 
   disconnect () {
     this.connecting = false
-    this.plugin.disconnect()
+    return this.plugin.disconnect()
   }
 
   /**
    * Get a quote from a connector
    * @param  {String} [params.sourceAmount] Either the sourceAmount or destinationAmount must be specified
    * @param  {String} [params.destinationAmount] Either the sourceAmount or destinationAmount must be specified
-   * @param  {String} params.destinationLedger Recipient's ledger
+   * @param  {String} params.destinationAddress Recipient's ledger
+   * @param  {Number} [params.destinationExpiryDuration] Number of seconds between when the destination transfer is proposed and when it expires.
+   * @param  {String} [params.destinationPrecision] Must be provided for ledgers that are not adjacent to the quoting connector when quoting by source amount.
+   * @param  {String} [params.destinationScale]
    * @return {Object} Object including the amount that was not specified
    */
   quote (params) {
@@ -98,10 +102,13 @@ class Client extends EventEmitter {
       }
 
       const quoteQuery = {
-        source_ledger: plugin.id,
+        source_address: (yield plugin.getPrefix()),
         source_amount: params.sourceAmount,
-        destination_ledger: params.destinationLedger,
-        destination_amount: params.destinationAmount
+        destination_address: params.destinationAddress,
+        destination_amount: params.destinationAmount,
+        destination_expiry_duration: params.destinationExpiryDuration,
+        destination_precision: params.destinationPrecision,
+        destination_scale: params.destinationScale
       }
       const connectors = yield plugin.getConnectors()
       const quotes = (yield connectors.map(function (connector) {
@@ -112,7 +119,8 @@ class Client extends EventEmitter {
       return omitUndefined({
         sourceAmount: bestQuote.source_amount,
         destinationAmount: bestQuote.destination_amount,
-        connectorAccount: bestQuote.source_connector_account
+        connectorAccount: bestQuote.source_connector_account,
+        sourceExpiryDuration: bestQuote.source_expiry_duration
       })
     })
   }
@@ -122,11 +130,11 @@ class Client extends EventEmitter {
    * @param  {String} params.sourceAmount Amount to send
    * @param  {String} params.destinationAmount Amount recipient will receive
    * @param  {String} params.destinationAccount Recipient's account
-   * @param  {String} params.destinationLedger Recipient's ledger
    * @param  {String} params.connectorAccount First connector's account on the source ledger (from the quote)
    * @param  {Object} params.destinationMemo Memo for the recipient to be included with the payment
    * @param  {String} params.expiresAt Payment expiry timestamp
    * @param  {String} params.executionCondition Crypto condition
+   * @param  {String} [params.uuid] Unique identifier for the transfer.
    * @return {Promise.<Object>} Resolves when the payment has been submitted to the plugin
    */
   sendQuotedPayment (params) {
@@ -141,14 +149,12 @@ class Client extends EventEmitter {
     // TODO throw errors if other fields are not specified
 
     const transfer = omitUndefined({
-      id: uuid.v4(),
-      ledger: this.plugin.id,
+      id: params.uuid || uuid.v4(),
       account: params.connectorAccount,
       amount: params.sourceAmount,
       data: {
         ilp_header: omitUndefined({
           account: params.destinationAccount,
-          ledger: params.destinationLedger,
           amount: params.destinationAmount,
           data: params.destinationMemo
         })
