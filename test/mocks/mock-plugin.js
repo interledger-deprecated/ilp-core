@@ -5,7 +5,6 @@ const EventEmitter = require('eventemitter2')
 class MockPlugin extends EventEmitter {
   constructor () {
     super()
-    this.prefix = 'mock.'
     this.host = 'mock:'
   }
 
@@ -23,8 +22,8 @@ class MockPlugin extends EventEmitter {
     return this.connected
   }
 
-  getPrefix () {
-    return Promise.resolve(this.prefix)
+  getAccount () {
+    return 'mock.mark'
   }
 
   getConnectors () {
