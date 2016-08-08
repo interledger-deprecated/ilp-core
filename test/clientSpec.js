@@ -16,7 +16,7 @@ describe('Client', function () {
   describe('constructor', function () {
     it('should instantiate the ledger plugin', function () {
       const client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
 
       assert.instanceOf(client, Client)
@@ -26,10 +26,8 @@ describe('Client', function () {
     it('should fail if the ledger plugin does not exist', function () {
       assert.throws(() => {
         return new Client({
-          plugin: null,
-          auth: {
-            mock: true
-          }
+          _plugin: null,
+          mock: true
         })
       }, '"plugin" must be a function')
     })
@@ -38,7 +36,7 @@ describe('Client', function () {
   describe('connect', function () {
     it('should call connect on the plugin', function * () {
       const client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
       const stubConnect = sinon.stub(client.getPlugin(), 'connect')
 
@@ -52,7 +50,7 @@ describe('Client', function () {
   describe('disconnect', function () {
     it('should call disconnect on the plugin', function * () {
       const client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
       const stubDisconnect = sinon.stub(client.getPlugin(), 'disconnect')
 
@@ -66,7 +64,7 @@ describe('Client', function () {
   describe('fulfillCondition', function () {
     it('should call fulfillCondition on the plugin', function * () {
       const client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
       const stubDisconnect = sinon.stub(client.getPlugin(), 'fulfillCondition')
 
@@ -81,7 +79,7 @@ describe('Client', function () {
   describe('waitForConnection', function () {
     it('should return a rejected promise if not currently connecting', function * () {
       const client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
 
       client.disconnect()
@@ -94,7 +92,7 @@ describe('Client', function () {
   describe('quote', function () {
     beforeEach(function () {
       this.client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
     })
 
@@ -283,7 +281,7 @@ describe('Client', function () {
   describe('sendQuotedPayment', function () {
     beforeEach(function () {
       this.client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
     })
 
@@ -394,7 +392,7 @@ describe('Client', function () {
   describe('use', function () {
     beforeEach(function () {
       this.client = new Client({
-        plugin: MockPlugin
+        _plugin: MockPlugin
       })
     })
 

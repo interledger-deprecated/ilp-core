@@ -17,11 +17,11 @@ class Client extends EventEmitter {
       throw new TypeError('Client options must be an object')
     }
 
-    if (typeof opts.plugin !== 'function') {
+    if (typeof opts._plugin !== 'function') {
       throw new TypeError('"plugin" must be a function')
     }
 
-    const Plugin = opts.plugin
+    const Plugin = opts._plugin
 
     this.plugin = new Plugin(opts)
     this.connecting = false

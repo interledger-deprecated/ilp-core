@@ -21,12 +21,10 @@ const Core = require('ilp-core').Core
 const core = new Core()
 core.addClient('ilpdemo.red',
   new Client({
-    plugin: require('ilp-plugin-bells'),
-    auth: {
-      prefix: 'ilpdemo.red',
-      account: 'https://red.ilpdemo.org/ledger/accounts/alice',
-      password: 'alice'
-    }
+    _plugin: require('ilp-plugin-bells'),
+    prefix: 'ilpdemo.red',
+    account: 'https://red.ilpdemo.org/ledger/accounts/alice',
+    password: 'alice'
   }))
 
 core.connect()
@@ -107,12 +105,10 @@ class MyExtension {
 }
 
 const client = new Client({
-  plugin: require('ilp-plugin-bells'),
-  auth: {
-    prefix: 'ilpdemo.red',
-    account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
-    password: 'bobbob'
-  }
+  _plugin: require('ilp-plugin-bells'),
+  prefix: 'ilpdemo.red',
+  account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
+  password: 'bobbob'
 })
 
 client.use(MyExtension)
