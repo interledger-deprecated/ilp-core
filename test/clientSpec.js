@@ -126,7 +126,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.',
+          source_address: 'mock.mark',
           destination_address: 'example.red',
           source_amount: '1',
           destination_expiry_duration: '4'
@@ -157,7 +157,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.',
+          source_address: 'mock.mark',
           destination_address: 'example.red',
           source_amount: '1'
         })
@@ -183,7 +183,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.',
+          source_address: 'mock.mark',
           destination_address: 'example.red',
           destination_amount: '1'
         })
@@ -209,7 +209,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.',
+          source_address: 'mock.mark',
           destination_address: 'example.red',
           destination_amount: '1'
         })
@@ -252,7 +252,7 @@ describe('Client', function () {
         nock('http://connector1.example')
           .get('/quote')
           .query({
-            source_address: 'mock.',
+            source_address: 'mock.mark',
             destination_address: 'example.red',
             destination_amount: '1'
           })
@@ -262,7 +262,7 @@ describe('Client', function () {
         nock('http://connector2.example')
           .get('/quote')
           .query({
-            source_address: 'mock.',
+            source_address: 'mock.mark',
             destination_address: 'example.red',
             destination_amount: '1'
           })
