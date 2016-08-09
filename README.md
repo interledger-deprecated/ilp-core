@@ -78,39 +78,3 @@ core.on('receive', (client, transfer) => {
 })
 ```
 
-## Extensions
-
-To extend the functionality of the `Client`:
-
-```js
-const Client = require('ilp-core').Client
-
-class MyExtension {
-  constructor (client) {
-    this.client = client
-    this.client.on('receive', this._handleReceive.bind(this))
-  }
-
-  static getName () {
-    return 'extension'
-  }
-
-  pluginIsConnected () {
-    return this.client.getPlugin().isConnected()
-  }
-
-  _handleReceive (transfer) {
-    // do something with the transfer
-  }
-}
-
-const client = new Client({
-  _plugin: require('ilp-plugin-bells'),
-  prefix: 'ilpdemo.blue.',
-  account: 'https://blue.ilpdemo.org/ledger/accounts/bob',
-  password: 'bobbob'
-})
-
-client.use(MyExtension)
-console.log(client.extension.pluginIsConnected())
-```
