@@ -205,6 +205,33 @@ describe('Client', function () {
       .catch(done)
     })
 
+    it('should get the quotes from the list of specified connectors', function (done) {
+      nock('http://connector.example')
+        .get('/quote')
+        .query({
+          source_address: 'mock.mark',
+          destination_address: 'example.red',
+          destination_amount: '1'
+        })
+        .reply(200, {
+          source_amount: '1',
+          source_connector_account: 'mock/connector'
+        })
+      this.client.quote({
+        destinationAddress: 'example.red',
+        destinationAmount: '1',
+        connectors: ['http://connector.example']
+      })
+      .then(function (quote) {
+        assert.deepEqual(quote, {
+          sourceAmount: '1',
+          connectorAccount: 'mock/connector'
+        })
+        done()
+      })
+      .catch(done)
+    })
+
     it('ignores AssetsNotTraded errors', function (done) {
       nock('http://connector.example')
         .get('/quote')
