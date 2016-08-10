@@ -26,12 +26,20 @@ class Client extends EventEmitter {
     this.plugin = new Plugin(opts)
     this.connecting = false
 
-    this.plugin
-      .on('receive', (transfer) => this.emitAsync('receive', transfer))
-      .on('fulfill_execution_condition', (transfer, fulfillment) =>
-        this.emitAsync('fulfill_execution_condition', transfer, fulfillment))
-      .on('fulfill_cancellation_condition', (transfer, fulfillment) =>
-        this.emitAsync('fulfill_cancellation_condition', transfer, fulfillment))
+    // listen for all events in both the incoming and outgoing directions
+    for (let direction of ['incoming', 'outgoing']) {
+      this.plugin
+        .on(direction + '_transfer', (transfer) =>
+          this.emitAsync(direction + '_transfer', transfer))
+        .on(direction + '_prepare', (transfer) =>
+          this.emitAsync(direction + '_prepare', transfer))
+        .on(direction + '_fulfill', (transfer, fulfillment) =>
+          this.emitAsync(direction + '_fulfill', transfer, fulfillment))
+        .on(direction + '_cancel', (transfer, reason) =>
+          this.emitAsync(direction + '_cancel', transfer, reason))
+        .on(direction + '_reject', (transfer, reason) =>
+          this.emitAsync(direction + '_reject', transfer, reason))
+    }
 
     this._extensions = {}
   }
