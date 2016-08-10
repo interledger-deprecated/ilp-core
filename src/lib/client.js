@@ -100,6 +100,7 @@ class Client extends EventEmitter {
    * @param  {Number} [params.destinationExpiryDuration] Number of seconds between when the destination transfer is proposed and when it expires.
    * @param  {String} [params.destinationPrecision] Must be provided for ledgers that are not adjacent to the quoting connector when quoting by source amount.
    * @param  {String} [params.destinationScale]
+   * @param  {Array} [params.connectors] List of connectors to get the quotes from
    * @return {Object} Object including the amount that was not specified
    */
   quote (params) {
@@ -118,7 +119,7 @@ class Client extends EventEmitter {
         destination_precision: params.destinationPrecision,
         destination_scale: params.destinationScale
       }
-      const connectors = yield plugin.getConnectors()
+      const connectors = params.connectors || (yield plugin.getConnectors())
       const quotes = (yield connectors.map(function (connector) {
         return getQuote(connector, quoteQuery)
       })).filter(notUndefined)
