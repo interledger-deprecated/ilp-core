@@ -435,4 +435,61 @@ describe('Client', function () {
       assert.isTrue(this.client.test.method())
     })
   })
+
+  describe('events', function () {
+    beforeEach(function () {
+      this.client = new Client({
+        _plugin: MockPlugin
+      })
+    })
+
+    const testEvent = (client, name) => {
+      const incoming = new Promise(resolve =>
+        client.on('incoming_' + name, resolve))
+      const outgoing = new Promise(resolve =>
+        client.on('outgoing_' + name, resolve))
+
+      client.plugin.emit('incoming_' + name)
+      client.plugin.emit('outgoing_' + name)
+
+      return Promise.all([incoming, outgoing])
+        // make sure the tests don't pass if the error is logged
+        .catch((e) => { console.error; throw e })
+    }
+
+    it('should emit `*_transfer` from plugin', function (done) {
+      testEvent(this.client, 'transfer')
+        .then(() => {
+          done()
+        })
+    })
+
+    it('should emit `*_prepare` from plugin', function (done) {
+      testEvent(this.client, 'prepare')
+        .then(() => {
+          done()
+        })
+    })
+
+    it('should emit `*_fulfill` from plugin', function (done) {
+      testEvent(this.client, 'fulfill')
+        .then(() => {
+          done()
+        })
+    })
+
+    it('should emit `*_cancel` from plugin', function (done) {
+      testEvent(this.client, 'cancel')
+        .then(() => {
+          done()
+        })
+    })
+
+    it('should emit `*_reject` from plugin', function (done) {
+      testEvent(this.client, 'reject')
+        .then(() => {
+          done()
+        })
+    })
+  })
 })
