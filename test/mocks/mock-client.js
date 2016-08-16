@@ -7,6 +7,8 @@ class MockClient extends EventEmitter {
     super()
     this.plugin = opts
     this.plugin.getPrefix = function () { return Promise.resolve(this.prefix) }
+    this.plugin.getAccount = function () { return this.prefix + 'mark' }
+    this.plugin.getInfo = function () { return Promise.resolve({precision: 10, scale: 2}) }
   }
 
   getPlugin () { return this.plugin }
