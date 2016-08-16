@@ -26,6 +26,10 @@ class MockPlugin extends EventEmitter {
     return 'mock.mark'
   }
 
+  getInfo () {
+    return Promise.resolve({precision: 10, scale: 2})
+  }
+
   getConnectors () {
     return Promise.resolve(['http://connector.example'])
   }

@@ -2,12 +2,12 @@
 
 const co = require('co')
 const uuid = require('uuid')
-const request = require('superagent')
 const BigNumber = require('bignumber.js')
 const isUndefined = require('lodash/fp/isUndefined')
 const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 const EventEmitter = require('eventemitter2')
 const notUndefined = require('lodash/fp/negate')(isUndefined)
+const getQuote = require('./util').getQuote
 
 class Client extends EventEmitter {
   constructor (opts) {
@@ -173,15 +173,6 @@ class Client extends EventEmitter {
     })
 
     return this.plugin.send(transfer)
-  }
-}
-
-function * getQuote (connector, query) {
-  try {
-    const res = yield request.get(connector + '/quote').query(query)
-    return res.body
-  } catch (err) {
-    if (err.response.body.id !== 'AssetsNotTradedError') throw err
   }
 }
 
