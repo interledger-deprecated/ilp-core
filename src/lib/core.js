@@ -101,8 +101,8 @@ class Core extends EventEmitter {
     const destinationPrecisionAndScale = query.destinationPrecisionAndScale || {}
     const quote = {connectorAccount, sourceLedger}
 
-    // If we know a route to the destinationAmount, proceed. Otherwise, ask a
-    // connector closer to the destination.
+    // If we know a local route to the destinationAddress, proceed. Otherwise,
+    // ask a connector closer to the destination.
     if (getLedgerPrefix(query.destinationAddress) === hop.finalLedger) {
       return Object.assign(getExpiryDurations(
           sourceExpiryDuration, destinationExpiryDuration, hop.minMessageWindow),
