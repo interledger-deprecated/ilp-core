@@ -23,7 +23,7 @@ class MockPlugin extends EventEmitter {
   }
 
   getAccount () {
-    return 'mock.mark'
+    return Promise.resolve('mock.mark')
   }
 
   getInfo () {

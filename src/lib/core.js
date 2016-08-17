@@ -94,7 +94,7 @@ class Core extends EventEmitter {
     if (!hop) return null
 
     const sourceLedger = hop.sourceLedger
-    const connectorAccount = this.getPlugin(sourceLedger).getAccount()
+    const connectorAccount = yield this.getPlugin(sourceLedger).getAccount()
     const sourceExpiryDuration = parseDuration(query.sourceExpiryDuration)
     const destinationExpiryDuration = (sourceExpiryDuration || query.destinationExpiryDuration)
       ? parseDuration(query.destinationExpiryDuration) : 5

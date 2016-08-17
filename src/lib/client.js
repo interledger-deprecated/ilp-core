@@ -111,7 +111,7 @@ class Client extends EventEmitter {
       }
 
       const quoteQuery = {
-        source_address: plugin.getAccount(),
+        source_address: (yield plugin.getAccount()),
         source_amount: params.sourceAmount,
         destination_address: params.destinationAddress,
         destination_amount: params.destinationAmount,
