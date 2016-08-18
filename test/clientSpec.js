@@ -416,53 +416,6 @@ describe('Client', function () {
     })
   })
 
-  describe('use', function () {
-    beforeEach(function () {
-      this.client = new Client({
-        _plugin: MockPlugin
-      })
-    })
-
-    it('should throw an error if the Extension class does not have static getName method', function () {
-      const client = this.client
-      function Extension () {}
-      assert.throws(function () {
-        client.use(Extension)
-      }, 'Extension class must have a static getName method')
-    })
-
-    it('should throw an error if Extension.getName does not return a string', function () {
-      const client = this.client
-      function Extension () {}
-      Extension.getName = function () { return null }
-      assert.throws(function () {
-        client.use(Extension)
-      }, 'Extension.getName must return a string')
-    })
-
-    it('should call the Extension constructor with the client instance', function () {
-      function Extension () {}
-      Extension.getName = function () { return 'test' }
-      const objUsedForSinonToWork = {
-        Extension: Extension
-      }
-      const spy = sinon.spy(objUsedForSinonToWork, 'Extension')
-      this.client.use(objUsedForSinonToWork.Extension)
-      assert.calledWith(spy, this.client)
-      spy.restore()
-    })
-
-    it('should make all Extension functions available via client[name]', function () {
-      function testMethod () { return true }
-      function Extension () {}
-      Extension.getName = function () { return 'test' }
-      Extension.prototype.method = testMethod
-      this.client.use(Extension)
-      assert.typeOf(this.client.test.method, 'function')
-      assert.isTrue(this.client.test.method())
-    })
-  })
-
   describe('events', function () {
     beforeEach(function () {
       this.client = new Client({

@@ -44,23 +44,6 @@ class Client extends EventEmitter {
     this._extensions = {}
   }
 
-  /**
-   * Use an ILP Extension
-   * @param  {Function} Extension ILP Extension to use
-   */
-  use (Extension) {
-    if (typeof Extension.getName !== 'function') {
-      throw new Error('Extension class must have a static getName method')
-    }
-    const name = Extension.getName()
-    if (typeof name !== 'string') {
-      throw new Error('Extension.getName must return a string')
-    }
-    const ext = new Extension(this)
-    this._extensions[name] = ext
-    this[name] = ext
-  }
-
   getPlugin () {
     return this.plugin
   }
