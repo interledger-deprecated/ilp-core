@@ -101,13 +101,15 @@ class Core extends EventEmitter {
     const destinationPrecisionAndScale = query.destinationPrecisionAndScale || {}
     const quote = {connectorAccount, sourceLedger}
 
-    // If we know a local route to the destinationAddress, proceed. Otherwise,
-    // ask a connector closer to the destination.
-    if (getLedgerPrefix(query.destinationAddress) === hop.finalLedger) {
-      return Object.assign(getExpiryDurations(
-          sourceExpiryDuration, destinationExpiryDuration, hop.minMessageWindow),
-        hopToQuote(hop), quote)
-    }
+    const localQuote = Object.assign(
+      getExpiryDurations(sourceExpiryDuration, destinationExpiryDuration, hop.minMessageWindow),
+      hopToQuote(hop), quote)
+    const isLocalPath = hop.connector === this.tables.baseURI
+    const isDirectPath = getLedgerPrefix(query.destinationAddress) === hop.finalLedger
+    // If we know a local route to the destinationAddress, use the local route.
+    // If the route's destination is exactly the prefix being targeted, use the local route.
+    // Otherwise, ask a connector closer to the destination.
+    if (isLocalPath || isDirectPath) return localQuote
 
     let headHop
     // Quote by source amount
@@ -131,6 +133,9 @@ class Core extends EventEmitter {
       destination_scale: destinationPrecisionAndScale.scale,
       slippage: 0 // Slippage will be applied at the first connector, not an intermediate one.
     }))
+
+    // If no remote quote can be found, just use the local one.
+    if (!tailQuote) return localQuote
 
     // Quote by destination amount
     if (query.destinationAmount) {
