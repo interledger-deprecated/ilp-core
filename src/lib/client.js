@@ -7,6 +7,7 @@ const isUndefined = require('lodash/fp/isUndefined')
 const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 const EventEmitter = require('eventemitter2')
 const notUndefined = require('lodash/fp/negate')(isUndefined)
+const startsWith = require('lodash/fp/startsWith')
 const getQuote = require('./util').getQuote
 
 class Client extends EventEmitter {
@@ -92,6 +93,16 @@ class Client extends EventEmitter {
       if (params.sourceAmount ? params.destinationAmount : !params.destinationAmount) {
         throw new Error('Should provide source or destination amount but not both')
       }
+      const prefix = yield plugin.getPrefix()
+      // Same-ledger payment
+      if (startsWith(prefix, params.destinationAddress)) {
+        const amount = params.sourceAmount || params.destinationAmount
+        return omitUndefined({
+          sourceAmount: amount,
+          destinationAmount: amount,
+          sourceExpiryDuration: params.destinationExpiryDuration
+        })
+      }
 
       const quoteQuery = {
         source_address: (yield plugin.getAccount()),
@@ -138,19 +149,36 @@ class Client extends EventEmitter {
       return Promise.reject(new Error('executionCondition should not be used without expiresAt'))
     }
 
+    const transferData = {
+      ilp_header: omitUndefined({
+        account: params.destinationAccount,
+        amount: params.destinationAmount,
+        data: params.destinationMemo
+      })
+    }
+
+    // Same-ledger payment
+    if (!params.connectorAccount) {
+      if (params.sourceAmount !== params.destinationAmount) {
+        return Promise.reject(new Error('sourceAmount and destinationAmount must be equivalent for local transfers'))
+      }
+      return this.plugin.send(omitUndefined({
+        id: params.uuid || uuid.v4(),
+        account: params.destinationAccount,
+        amount: params.sourceAmount,
+        data: transferData,
+        executionCondition: params.executionCondition,
+        expiresAt: params.expiresAt
+      }))
+    }
+
     // TODO throw errors if other fields are not specified
 
     const transfer = omitUndefined({
       id: params.uuid || uuid.v4(),
       account: params.connectorAccount,
       amount: params.sourceAmount,
-      data: {
-        ilp_header: omitUndefined({
-          account: params.destinationAccount,
-          amount: params.destinationAmount,
-          data: params.destinationMemo
-        })
-      },
+      data: transferData,
       executionCondition: params.executionCondition,
       expiresAt: params.expiresAt
     })
