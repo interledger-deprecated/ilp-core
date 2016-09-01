@@ -22,8 +22,12 @@ class MockPlugin extends EventEmitter {
     return this.connected
   }
 
+  getPrefix () {
+    return Promise.resolve('example.blue.')
+  }
+
   getAccount () {
-    return Promise.resolve('mock.mark')
+    return Promise.resolve('example.blue.mark')
   }
 
   getInfo () {

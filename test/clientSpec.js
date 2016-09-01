@@ -126,7 +126,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.mark',
+          source_address: 'example.blue.mark',
           destination_address: 'example.red',
           source_amount: '1',
           destination_expiry_duration: '4'
@@ -157,7 +157,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.mark',
+          source_address: 'example.blue.mark',
           destination_address: 'example.red',
           source_amount: '1'
         })
@@ -183,7 +183,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.mark',
+          source_address: 'example.blue.mark',
           destination_address: 'example.red',
           destination_amount: '1'
         })
@@ -209,7 +209,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.mark',
+          source_address: 'example.blue.mark',
           destination_address: 'example.red',
           destination_amount: '1'
         })
@@ -236,7 +236,7 @@ describe('Client', function () {
       nock('http://connector.example')
         .get('/quote')
         .query({
-          source_address: 'mock.mark',
+          source_address: 'example.blue.mark',
           destination_address: 'example.red',
           destination_amount: '1'
         })
@@ -279,7 +279,7 @@ describe('Client', function () {
         nock('http://connector1.example')
           .get('/quote')
           .query({
-            source_address: 'mock.mark',
+            source_address: 'example.blue.mark',
             destination_address: 'example.red',
             destination_amount: '1'
           })
@@ -289,7 +289,7 @@ describe('Client', function () {
         nock('http://connector2.example')
           .get('/quote')
           .query({
-            source_address: 'mock.mark',
+            source_address: 'example.blue.mark',
             destination_address: 'example.red',
             destination_amount: '1'
           })
@@ -302,6 +302,23 @@ describe('Client', function () {
           destinationAmount: '1'
         }), info.quote)
       })
+    })
+
+    it('gets same-ledger quotes', function (done) {
+      this.client.quote({
+        destinationAddress: 'example.blue.bob',
+        sourceAmount: '1',
+        destinationExpiryDuration: 4
+      })
+      .then(function (quote) {
+        assert.deepEqual(quote, {
+          sourceAmount: '1',
+          destinationAmount: '1',
+          sourceExpiryDuration: 4
+        })
+        done()
+      })
+      .catch(done)
     })
   })
 
@@ -413,6 +430,56 @@ describe('Client', function () {
         done()
       })
       .catch(done)
+    })
+
+    describe('same-ledger transfers', function () {
+      it('sends a same-ledger transfer', function (done) {
+        const spy = sinon.spy(this.client.plugin, 'send')
+
+        this.client.sendQuotedPayment({
+          sourceAmount: '1',
+          destinationAmount: '1',
+          destinationAccount: 'example.blue.bob',
+          executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
+          expiresAt: '2016-07-02T00:00:00.000Z',
+          destinationMemo: { foo: 'bar' },
+          uuid: 'abcdef'
+        })
+        .then(function () {
+          assert.calledWithMatch(spy, {
+            id: 'abcdef',
+            account: 'example.blue.bob',
+            amount: '1',
+            executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
+            expiresAt: '2016-07-02T00:00:00.000Z',
+            data: {
+              ilp_header: {
+                account: 'example.blue.bob',
+                amount: '1',
+                data: { foo: 'bar' }
+              }
+            }
+          })
+          done()
+        })
+        .catch(done)
+      })
+
+      it('rejects if the source and destination amounts differ', function (done) {
+        this.client.sendQuotedPayment({
+          sourceAmount: '1',
+          destinationAmount: '2',
+          destinationAccount: 'example.blue.bob',
+          executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
+          expiresAt: '2016-07-02T00:00:00.000Z',
+          destinationMemo: { foo: 'bar' },
+          uuid: 'abcdef'
+        })
+        .catch(function (err) {
+          assert.equal(err.message, 'sourceAmount and destinationAmount must be equivalent for local transfers')
+          done()
+        })
+      })
     })
   })
 
