@@ -23,13 +23,31 @@ describe('Client', function () {
       assert.instanceOf(client.getPlugin(), MockPlugin)
     })
 
+    it('should fail if "pluginOpts" is not an object', function () {
+      assert.throws(() => {
+        return new Client()
+      }, 'Client pluginOpts must be an object')
+    })
+
     it('should fail if the ledger plugin does not exist', function () {
       assert.throws(() => {
         return new Client({
           _plugin: null,
           mock: true
         })
-      }, '"plugin" must be a function')
+      }, '"pluginOpts._plugin" must be a function')
+    })
+
+    it('should fail if "clientOpts" is not an object', function () {
+      assert.throws(() => {
+        return new Client({ _plugin: MockPlugin }, 123)
+      }, 'Client clientOpts must be an object')
+    })
+
+    it('should fail if "connectors" is passed but is not an array', function () {
+      assert.throws(() => {
+        return new Client({ _plugin: MockPlugin }, { connectors: {} })
+      }, '"clientOpts.connectors" must be an Array or undefined')
     })
   })
 
@@ -206,7 +224,7 @@ describe('Client', function () {
     })
 
     it('should get the quotes from the list of specified connectors', function (done) {
-      nock('http://connector.example')
+      nock('http://connector2.example')
         .get('/quote')
         .query({
           source_address: 'example.blue.mark',
@@ -220,7 +238,7 @@ describe('Client', function () {
       this.client.quote({
         destinationAddress: 'example.red',
         destinationAmount: '1',
-        connectors: ['http://connector.example']
+        connectors: ['http://connector2.example']
       })
       .then(function (quote) {
         assert.deepEqual(quote, {
@@ -269,13 +287,6 @@ describe('Client', function () {
       }
     ].forEach(function (info) {
       it('returns the cheapest quote', function * () {
-        this.client.plugin.getConnectors = function () {
-          return Promise.resolve([
-            'http://connector1.example',
-            'http://connector2.example'
-          ])
-        }
-
         nock('http://connector1.example')
           .get('/quote')
           .query({
@@ -298,6 +309,10 @@ describe('Client', function () {
           }))
 
         assert.deepEqual(yield this.client.quote({
+          connectors: [
+            'http://connector1.example',
+            'http://connector2.example'
+          ],
           destinationAddress: 'example.red',
           destinationAmount: '1'
         }), info.quote)
@@ -480,6 +495,33 @@ describe('Client', function () {
           done()
         })
       })
+    })
+  })
+
+  describe('getConnectors', function () {
+    it('returns the configured connectors', function (done) {
+      const client = new Client({_plugin: MockPlugin}, {connectors: ['http://foo.example']})
+      client.getConnectors().then(function (connectors) {
+        assert.deepEqual(connectors, ['http://foo.example'])
+        done()
+      }).catch(done)
+    })
+
+    it('returns plugin.getInfo().connectors if no connectors are configured', function (done) {
+      const client = new Client({_plugin: MockPlugin})
+      client.getConnectors().then(function (connectors) {
+        assert.deepEqual(connectors, ['http://connector.example'])
+        done()
+      }).catch(done)
+    })
+
+    it('returns [] if no connectors are found', function (done) {
+      const client = new Client({_plugin: MockPlugin})
+      client.plugin.getInfo = function () { return Promise.resolve({}) }
+      client.getConnectors().then(function (connectors) {
+        assert.deepEqual(connectors, [])
+        done()
+      }).catch(done)
     })
   })
 

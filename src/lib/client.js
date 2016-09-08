@@ -11,20 +11,36 @@ const startsWith = require('lodash/fp/startsWith')
 const getQuote = require('./util').getQuote
 
 class Client extends EventEmitter {
-  constructor (opts) {
+  /**
+   * @param {Object} pluginOpts options for the ledger plugin
+   * @param {Function} pluginOpts._plugin A ledger plugin constructor
+   * @param {Object} [_clientOpts]
+   * @param {URI[]} [_clientOpts.connectors] A list of connectors to quote from
+   */
+  constructor (pluginOpts, _clientOpts) {
     super()
 
-    if (typeof opts !== 'object') {
-      throw new TypeError('Client options must be an object')
+    if (typeof pluginOpts !== 'object') {
+      throw new TypeError('Client pluginOpts must be an object')
     }
 
-    if (typeof opts._plugin !== 'function') {
-      throw new TypeError('"plugin" must be a function')
+    if (typeof pluginOpts._plugin !== 'function') {
+      throw new TypeError('"pluginOpts._plugin" must be a function')
     }
 
-    const Plugin = opts._plugin
+    if (_clientOpts !== undefined && typeof _clientOpts !== 'object') {
+      throw new TypeError('Client clientOpts must be an object')
+    }
 
-    this.plugin = new Plugin(opts)
+    const clientOpts = _clientOpts || {}
+    if (clientOpts.connectors !== undefined && !Array.isArray(clientOpts.connectors)) {
+      throw new TypeError('"clientOpts.connectors" must be an Array or undefined')
+    }
+
+    const Plugin = pluginOpts._plugin
+
+    this.plugin = new Plugin(pluginOpts)
+    this.connectors = clientOpts.connectors
     this.connecting = false
 
     // listen for all events in both the incoming and outgoing directions
@@ -89,6 +105,7 @@ class Client extends EventEmitter {
    */
   quote (params) {
     const plugin = this.plugin
+    const _this = this
     return co(function * () {
       if (params.sourceAmount ? params.destinationAmount : !params.destinationAmount) {
         throw new Error('Should provide source or destination amount but not both')
@@ -113,7 +130,7 @@ class Client extends EventEmitter {
         destination_precision: params.destinationPrecision,
         destination_scale: params.destinationScale
       }
-      const connectors = params.connectors || (yield plugin.getConnectors())
+      const connectors = params.connectors || (yield _this.getConnectors())
       const quotes = (yield connectors.map(function (connector) {
         return getQuote(connector, quoteQuery)
       })).filter(notUndefined)
@@ -184,6 +201,18 @@ class Client extends EventEmitter {
     })
 
     return this.plugin.send(transfer)
+  }
+
+  /**
+   * Get the list of connector URIs.
+   * @returns {Promise.<URI[]>}
+   */
+  getConnectors () {
+    if (this.connectors) return Promise.resolve(this.connectors)
+    return this.plugin.getInfo().then((info) => {
+      if (!info.connectors) return []
+      return info.connectors.map((connector) => connector.connector)
+    })
   }
 }
 
