@@ -31,11 +31,11 @@ class MockPlugin extends EventEmitter {
   }
 
   getInfo () {
-    return Promise.resolve({precision: 10, scale: 2})
-  }
-
-  getConnectors () {
-    return Promise.resolve(['http://connector.example'])
+    return Promise.resolve({
+      connectors: [{connector: 'http://connector.example'}],
+      precision: 10,
+      scale: 2
+    })
   }
 
   send () {
