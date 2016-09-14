@@ -158,12 +158,16 @@ class Client extends EventEmitter {
    * @return {Promise.<Object>} Resolves when the payment has been submitted to the plugin
    */
   sendQuotedPayment (params) {
+    return co.wrap(this._sendQuotedPayment).call(this, params)
+  }
+
+  * _sendQuotedPayment (params) {
     if (!params.executionCondition && !params.unsafeOptimisticTransport) {
-      return Promise.reject(new Error('executionCondition must be provided unless unsafeOptimisticTransport is true'))
+      throw new Error('executionCondition must be provided unless unsafeOptimisticTransport is true')
     }
 
     if (params.executionCondition && !params.expiresAt) {
-      return Promise.reject(new Error('executionCondition should not be used without expiresAt'))
+      throw new Error('executionCondition should not be used without expiresAt')
     }
 
     const transferData = {
@@ -173,15 +177,17 @@ class Client extends EventEmitter {
         data: params.destinationMemo
       })
     }
+    const prefix = yield this.plugin.getPrefix()
 
     // Same-ledger payment
     if (!params.connectorAccount) {
       if (params.sourceAmount !== params.destinationAmount) {
-        return Promise.reject(new Error('sourceAmount and destinationAmount must be equivalent for local transfers'))
+        throw new Error('sourceAmount and destinationAmount must be equivalent for local transfers')
       }
       return this.plugin.send(omitUndefined({
         id: params.uuid || uuid.v4(),
         account: params.destinationAccount,
+        ledger: prefix,
         amount: params.sourceAmount,
         data: transferData,
         executionCondition: params.executionCondition,
@@ -194,6 +200,7 @@ class Client extends EventEmitter {
     const transfer = omitUndefined({
       id: params.uuid || uuid.v4(),
       account: params.connectorAccount,
+      ledger: prefix,
       amount: params.sourceAmount,
       data: transferData,
       executionCondition: params.executionCondition,
