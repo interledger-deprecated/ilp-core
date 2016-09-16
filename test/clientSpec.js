@@ -399,6 +399,7 @@ describe('Client', function () {
         assert.calledWithMatch(spy, {
           id: 'abcdef',
           account: 'connector',
+          ledger: 'example.blue.',
           amount: '1',
           data: {
             ilp_header: {
@@ -431,6 +432,7 @@ describe('Client', function () {
       .then(function () {
         assert.calledWithMatch(spy, {
           account: 'connector',
+          ledger: 'example.blue.',
           amount: '1',
           data: {
             ilp_header: {
@@ -464,6 +466,7 @@ describe('Client', function () {
           assert.calledWithMatch(spy, {
             id: 'abcdef',
             account: 'example.blue.bob',
+            ledger: 'example.blue.',
             amount: '1',
             executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
             expiresAt: '2016-07-02T00:00:00.000Z',
