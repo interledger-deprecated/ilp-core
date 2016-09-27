@@ -1,4 +1,11 @@
-# ilp-core
+# ilp-core [![npm][npm-image]][npm-url] [![circle][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url]
+
+[npm-image]: https://img.shields.io/npm/v/ilp-core.svg?style=flat
+[npm-url]: https://npmjs.org/package/ilp-core
+[circle-image]: https://circleci.com/gh/interledger/js-ilp-core.svg?style=shield
+[circle-url]: https://circleci.com/gh/interledger/js-ilp-core
+[codecov-image]: https://codecov.io/gh/interledger/js-ilp-core/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/interledger/js-ilp-core
 
 > Core ILP module — handles ledger abstraction and quoting
 
