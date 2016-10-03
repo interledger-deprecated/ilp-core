@@ -26,13 +26,30 @@ const Client = require('ilp-core').Client
 const Core = require('ilp-core').Core
 
 const core = new Core()
-core.addClient('ilpdemo.red.',
-  new Client({
-    _plugin: require('ilp-plugin-bells'),
-    prefix: 'ilpdemo.red.',
-    account: 'https://red.ilpdemo.org/ledger/accounts/alice',
-    password: 'alice'
-  }))
+
+// options for the plugin that Client instantiates.
+// '_plugin' is the plugin module.
+const pluginOpts = {
+  _plugin: require('ilp-plugin-bells'),
+  prefix: 'ilpdemo.red.',
+  account: 'https://red.ilpdemo.org/ledger/accounts/alice',
+  password: 'alice'
+}
+
+// It is optional to specify clientOpts. It has one field, connectors, which
+// contains http endpoints for the connectors you wish to use.
+// These http addresses are used for quoting and getting ILP address information.
+// If unspecified, Client will get connectors from the plugin's 'getInfo' method.
+const clientOpts = {
+  connectors: [
+    'https://a.example:4000',
+    'https://b.example:4040',
+    'https://c.example:5555',
+    'https://d.example:4000',
+  ]
+}
+
+core.addClient('ilpdemo.red.', new Client(pluginOpts, clientOpts))
 
 core.connect()
 ```
@@ -54,7 +71,11 @@ const client = core.getClient('ilpdemo.red.')
 client.waitForConnection().then(() => {
   return client.quote({
     destinationAddress: payment.destinationAccount,
-    destinationAmount: payment.destinationAmount
+    destinationAmount: payment.destinationAmount,
+    // You can optionally specify connectors here. If left unspecified,
+    // then they will be accessed from the clientOpts object in the constructor,
+    // or from the 'getInfo' method of the plugin.
+    connectors: [ 'https://a.example:4000', 'https://b.example:5555' ]
   })
   .then((quote) => {
     return client.sendQuotedPayment(Object.assign({}, payment, quote))
