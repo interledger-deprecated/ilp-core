@@ -12,7 +12,7 @@ const mockRequire = require('mock-require')
 const MockPlugin = require('./mocks/mock-plugin')
 const MockClient = require('./mocks/mock-client')
 
-const RoutingTables = require('five-bells-routing').RoutingTables
+const RoutingTables = require('ilp-routing').RoutingTables
 const Core = require('../src/lib/core')
 
 describe('Core', function () {
