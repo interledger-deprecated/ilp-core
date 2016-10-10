@@ -5,7 +5,7 @@ const EventEmitter = require('eventemitter2')
 const BigNumber = require('bignumber.js')
 const isUndefined = require('lodash/fp/isUndefined')
 const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
-const RoutingTables = require('five-bells-routing').RoutingTables
+const RoutingTables = require('ilp-routing').RoutingTables
 const getQuote = require('./util').getQuote
 
 class Core extends EventEmitter {
