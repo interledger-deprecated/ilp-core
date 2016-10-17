@@ -8,14 +8,15 @@ const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 const EventEmitter = require('eventemitter2')
 const notUndefined = require('lodash/fp/negate')(isUndefined)
 const startsWith = require('lodash/fp/startsWith')
-const getQuote = require('./util').getQuote
+const debug = require('debug')('ilp-core')
 
 class Client extends EventEmitter {
   /**
    * @param {Object} pluginOpts options for the ledger plugin
    * @param {Function} pluginOpts._plugin A ledger plugin constructor
    * @param {Object} [_clientOpts]
-   * @param {URI[]} [_clientOpts.connectors] A list of connectors to quote from
+   * @param {String[]} [_clientOpts.connectors] A list of connectors to quote from
+   * @param {Integer} [_clientOpts.messageTimeout] The number of milliseconds to wait for a response to sendMessage.
    */
   constructor (pluginOpts, _clientOpts) {
     super()
@@ -33,14 +34,18 @@ class Client extends EventEmitter {
     }
 
     const clientOpts = _clientOpts || {}
-    if (clientOpts.connectors !== undefined && !Array.isArray(clientOpts.connectors)) {
+    this.connectors = clientOpts.connectors
+    this.messageTimeout = clientOpts.messageTimeout === undefined ? 10000 : clientOpts.messageTimeout
+
+    if (this.connectors !== undefined && !Array.isArray(this.connectors)) {
       throw new TypeError('"clientOpts.connectors" must be an Array or undefined')
+    }
+    if (typeof this.messageTimeout !== 'number') {
+      throw new TypeError('"clientOpts.messageTimeout" must be a Number or undefined')
     }
 
     const Plugin = pluginOpts._plugin
-
     this.plugin = new Plugin(pluginOpts)
-    this.connectors = clientOpts.connectors
     this.connecting = false
 
     // listen for all events in both the incoming and outgoing directions
@@ -57,6 +62,8 @@ class Client extends EventEmitter {
         .on(direction + '_reject', (transfer, reason) =>
           this.emitAsync(direction + '_reject', transfer, reason))
     }
+    this.plugin.on('incoming_message', (message) =>
+      this.emitAsync('incoming_message', message))
 
     this._extensions = {}
   }
@@ -100,7 +107,7 @@ class Client extends EventEmitter {
    * @param  {Number} [params.destinationExpiryDuration] Number of seconds between when the destination transfer is proposed and when it expires.
    * @param  {String} [params.destinationPrecision] Must be provided for ledgers that are not adjacent to the quoting connector when quoting by source amount.
    * @param  {String} [params.destinationScale]
-   * @param  {Array} [params.connectors] List of connectors to get the quotes from
+   * @param  {String[]} [params.connectors] List of connectors to get the quotes from
    * @return {Object} Object including the amount that was not specified
    */
   quote (params) {
@@ -121,7 +128,7 @@ class Client extends EventEmitter {
         })
       }
 
-      const quoteQuery = {
+      const quoteQuery = omitUndefined({
         source_address: (yield plugin.getAccount()),
         source_amount: params.sourceAmount,
         destination_address: params.destinationAddress,
@@ -129,10 +136,10 @@ class Client extends EventEmitter {
         destination_expiry_duration: params.destinationExpiryDuration,
         destination_precision: params.destinationPrecision,
         destination_scale: params.destinationScale
-      }
+      })
       const connectors = params.connectors || (yield _this.getConnectors())
-      const quotes = (yield connectors.map(function (connector) {
-        return getQuote(connector, quoteQuery)
+      const quotes = (yield connectors.map((connector) => {
+        return _this._getQuote(prefix + connector, quoteQuery)
       })).filter(notUndefined)
       if (quotes.length === 0) return
       const bestQuote = quotes.reduce(getCheaperQuote)
@@ -184,7 +191,7 @@ class Client extends EventEmitter {
       if (params.sourceAmount !== params.destinationAmount) {
         throw new Error('sourceAmount and destinationAmount must be equivalent for local transfers')
       }
-      return this.plugin.send(omitUndefined({
+      return this.plugin.sendTransfer(omitUndefined({
         id: params.uuid || uuid.v4(),
         account: params.destinationAccount,
         ledger: prefix,
@@ -207,19 +214,68 @@ class Client extends EventEmitter {
       expiresAt: params.expiresAt
     })
 
-    return this.plugin.send(transfer)
+    return this.plugin.sendTransfer(transfer)
   }
 
   /**
-   * Get the list of connector URIs.
-   * @returns {Promise.<URI[]>}
+   * Get the list of connector names.
+   * @returns {Promise.<String[]>}
    */
   getConnectors () {
     if (this.connectors) return Promise.resolve(this.connectors)
     return this.plugin.getInfo().then((info) => {
       if (!info.connectors) return []
-      return info.connectors.map((connector) => connector.connector)
+      return info.connectors.map((connector) => connector.name)
     })
+  }
+
+  * _getQuote (connectorAddress, quoteQuery) {
+    debug('remote quote connector=' + connectorAddress + ' query=' + JSON.stringify(quoteQuery))
+    const prefix = yield this.plugin.getPrefix()
+    return this._sendAndReceiveMessage({
+      ledger: prefix,
+      account: connectorAddress,
+      data: {
+        method: 'quote_request',
+        data: quoteQuery
+      }
+    }).then((quoteResponse) => {
+      if (quoteResponse.data.method === 'quote_response') {
+        return quoteResponse.data.data
+      }
+    }).catch((err) => {
+      debug('ignoring remote quote error: ' + err.message)
+    })
+  }
+
+  _sendAndReceiveMessage (reqMessage) {
+    reqMessage.data.id = uuid()
+    return new Promise((resolve, reject) => {
+      const done = (err, res) => {
+        clearTimeout(timeout)
+        this.plugin.removeListener('incoming_message', responseListener)
+        return err ? reject(err) : resolve(res)
+      }
+      const responseListener = makeMessageResponseListener(reqMessage.data.id, done)
+      const timeout = setTimeout(() => {
+        done(new Error('Timed out while awaiting response message'))
+      }, this.messageTimeout)
+
+      this.plugin.on('incoming_message', responseListener)
+      this.plugin.sendMessage(reqMessage).catch(done)
+    })
+  }
+}
+
+function makeMessageResponseListener (requestId, done) {
+  return function (resMessage) {
+    if (!resMessage.data) return
+    // Ignore notifications other than the response.
+    if (resMessage.data.id !== requestId) return
+    if (resMessage.data.method === 'error') {
+      return done(Error(resMessage.data.data.message))
+    }
+    done(null, resMessage)
   }
 }
 

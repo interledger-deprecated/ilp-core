@@ -6,7 +6,6 @@ sinon.assert.expose(chai.assert, { prefix: '' })
 const chaiAsPromised = require('chai-as-promised')
 chai.use(chaiAsPromised)
 const assert = chai.assert
-const nock = require('nock')
 
 const ilpCore = require('..')
 const Client = ilpCore.Client
@@ -48,6 +47,12 @@ describe('Client', function () {
       assert.throws(() => {
         return new Client({ _plugin: MockPlugin }, { connectors: {} })
       }, '"clientOpts.connectors" must be an Array or undefined')
+    })
+
+    it('should fail if "messageTimeout" is passed but is not a number', function () {
+      assert.throws(() => {
+        return new Client({ _plugin: MockPlugin }, { messageTimeout: '123' })
+      }, '"clientOpts.messageTimeout" must be a Number or undefined')
     })
   })
 
@@ -114,10 +119,6 @@ describe('Client', function () {
       })
     })
 
-    afterEach(function () {
-      nock.cleanAll()
-    })
-
     it('should reject if neither sourceAmount nor destinationAmount are specified', function (done) {
       this.client.quote({
         destinationAddress: 'example.red'
@@ -141,24 +142,22 @@ describe('Client', function () {
     })
 
     it('supports expiry durations', function (done) {
-      nock('http://connector.example')
-        .get('/quote')
-        .query({
-          source_address: 'example.blue.mark',
-          destination_address: 'example.red',
-          source_amount: '1',
-          destination_expiry_duration: '4'
-        })
-        .reply(200, {
-          destination_amount: '1',
-          source_connector_account: 'mock/connector',
-          source_expiry_duration: '5',
-          destination_expiry_duration: '4'
-        })
+      this.client.getPlugin().sendMessage = makeSendQuoteMessage({
+        source_address: 'example.blue.mark',
+        destination_address: 'example.red',
+        source_amount: '1',
+        destination_expiry_duration: '4'
+      }, {
+        destination_amount: '1',
+        source_connector_account: 'mock/connector',
+        source_expiry_duration: '5',
+        destination_expiry_duration: '4'
+      })
+
       this.client.quote({
         destinationAddress: 'example.red',
         sourceAmount: '1',
-        destinationExpiryDuration: 4
+        destinationExpiryDuration: '4'
       })
       .then(function (quote) {
         assert.deepEqual(quote, {
@@ -172,17 +171,15 @@ describe('Client', function () {
     })
 
     it('should get fixed sourceAmount quotes', function (done) {
-      nock('http://connector.example')
-        .get('/quote')
-        .query({
-          source_address: 'example.blue.mark',
-          destination_address: 'example.red',
-          source_amount: '1'
-        })
-        .reply(200, {
-          destination_amount: '1',
-          source_connector_account: 'mock/connector'
-        })
+      this.client.getPlugin().sendMessage = makeSendQuoteMessage({
+        source_address: 'example.blue.mark',
+        destination_address: 'example.red',
+        source_amount: '1'
+      }, {
+        destination_amount: '1',
+        source_connector_account: 'mock/connector'
+      })
+
       this.client.quote({
         destinationAddress: 'example.red',
         sourceAmount: '1'
@@ -198,17 +195,15 @@ describe('Client', function () {
     })
 
     it('should get fixed destinationAmount quotes', function (done) {
-      nock('http://connector.example')
-        .get('/quote')
-        .query({
-          source_address: 'example.blue.mark',
-          destination_address: 'example.red',
-          destination_amount: '1'
-        })
-        .reply(200, {
-          source_amount: '1',
-          source_connector_account: 'mock/connector'
-        })
+      this.client.getPlugin().sendMessage = makeSendQuoteMessage({
+        source_address: 'example.blue.mark',
+        destination_address: 'example.red',
+        destination_amount: '1'
+      }, {
+        source_amount: '1',
+        source_connector_account: 'mock/connector'
+      })
+
       this.client.quote({
         destinationAddress: 'example.red',
         destinationAmount: '1'
@@ -224,21 +219,19 @@ describe('Client', function () {
     })
 
     it('should get the quotes from the list of specified connectors', function (done) {
-      nock('http://connector2.example')
-        .get('/quote')
-        .query({
-          source_address: 'example.blue.mark',
-          destination_address: 'example.red',
-          destination_amount: '1'
-        })
-        .reply(200, {
-          source_amount: '1',
-          source_connector_account: 'mock/connector'
-        })
+      this.client.getPlugin().sendMessage = makeSendQuoteMessage({
+        source_address: 'example.blue.mark',
+        destination_address: 'example.red',
+        destination_amount: '1'
+      }, {
+        source_amount: '1',
+        source_connector_account: 'mock/connector'
+      }, 'example.blue.connector2')
+
       this.client.quote({
         destinationAddress: 'example.red',
         destinationAmount: '1',
-        connectors: ['http://connector2.example']
+        connectors: ['connector2']
       })
       .then(function (quote) {
         assert.deepEqual(quote, {
@@ -251,14 +244,25 @@ describe('Client', function () {
     })
 
     it('ignores AssetsNotTraded errors', function (done) {
-      nock('http://connector.example')
-        .get('/quote')
-        .query({
-          source_address: 'example.blue.mark',
-          destination_address: 'example.red',
-          destination_amount: '1'
-        })
-        .reply(422, {id: 'AssetsNotTradedError', message: 'broken'})
+      this.client.getPlugin().sendMessage = makeSendMessage({
+        ledger: 'example.blue.',
+        account: 'connector1',
+        data: {
+          method: 'quote_request',
+          data: {
+            source_address: 'example.blue.mark',
+            destination_address: 'example.red',
+            destination_amount: '1'
+          }
+        }
+      }, {
+        ledger: 'example.blue.',
+        account: 'connector1',
+        data: {
+          method: 'error',
+          data: {id: 'AssetsNotTradedError', message: 'broken'}
+        }
+      })
 
       this.client.quote({
         destinationAddress: 'example.red',
@@ -287,31 +291,34 @@ describe('Client', function () {
       }
     ].forEach(function (info) {
       it('returns the cheapest quote', function * () {
-        nock('http://connector1.example')
-          .get('/quote')
-          .query({
+        const plugin = this.client.getPlugin()
+        function sendMessage1 (message) {
+          plugin.sendMessage = sendMessage2
+          return makeSendQuoteMessage({
             source_address: 'example.blue.mark',
             destination_address: 'example.red',
             destination_amount: '1'
-          })
-          .reply(200, Object.assign(info.connector1, {
+          }, Object.assign(info.connector1, {
             source_connector_account: 'connector1'
-          }))
-        nock('http://connector2.example')
-          .get('/quote')
-          .query({
+          }), 'example.blue.connector1').call(plugin, message)
+        }
+
+        function sendMessage2 (message) {
+          plugin.sendMessage = null
+          return makeSendQuoteMessage({
             source_address: 'example.blue.mark',
             destination_address: 'example.red',
             destination_amount: '1'
-          })
-          .reply(200, Object.assign(info.connector2, {
+          }, Object.assign(info.connector2, {
             source_connector_account: 'connector2'
-          }))
+          }), 'example.blue.connector2').call(plugin, message)
+        }
 
+        plugin.sendMessage = sendMessage1
         assert.deepEqual(yield this.client.quote({
           connectors: [
-            'http://connector1.example',
-            'http://connector2.example'
+            'connector1',
+            'connector2'
           ],
           destinationAddress: 'example.red',
           destinationAmount: '1'
@@ -342,10 +349,6 @@ describe('Client', function () {
       this.client = new Client({
         _plugin: MockPlugin
       })
-    })
-
-    afterEach(function () {
-      nock.cleanAll()
     })
 
     it('should reject if no executionCondition is provided and unsafeOptimisticTransport is not set', function (done) {
@@ -383,7 +386,7 @@ describe('Client', function () {
     })
 
     it('should send a transfer to the ledger plugin with the ilp packet in the data field', function (done) {
-      const spy = sinon.spy(this.client.plugin, 'send')
+      const spy = sinon.spy(this.client.plugin, 'sendTransfer')
 
       this.client.sendQuotedPayment({
         connectorAccount: 'connector',
@@ -417,7 +420,7 @@ describe('Client', function () {
     })
 
     it('should send Optimistic payments if unsafeOptimisticTransport is set', function (done) {
-      const spy = sinon.spy(this.client.plugin, 'send')
+      const spy = sinon.spy(this.client.plugin, 'sendTransfer')
 
       this.client.sendQuotedPayment({
         unsafeOptimisticTransport: true,
@@ -451,7 +454,7 @@ describe('Client', function () {
 
     describe('same-ledger transfers', function () {
       it('sends a same-ledger transfer', function (done) {
-        const spy = sinon.spy(this.client.plugin, 'send')
+        const spy = sinon.spy(this.client.plugin, 'sendTransfer')
 
         this.client.sendQuotedPayment({
           sourceAmount: '1',
@@ -503,9 +506,9 @@ describe('Client', function () {
 
   describe('getConnectors', function () {
     it('returns the configured connectors', function (done) {
-      const client = new Client({_plugin: MockPlugin}, {connectors: ['http://foo.example']})
+      const client = new Client({_plugin: MockPlugin}, {connectors: ['foo']})
       client.getConnectors().then(function (connectors) {
-        assert.deepEqual(connectors, ['http://foo.example'])
+        assert.deepEqual(connectors, ['foo'])
         done()
       }).catch(done)
     })
@@ -513,7 +516,7 @@ describe('Client', function () {
     it('returns plugin.getInfo().connectors if no connectors are configured', function (done) {
       const client = new Client({_plugin: MockPlugin})
       client.getConnectors().then(function (connectors) {
-        assert.deepEqual(connectors, ['http://connector.example'])
+        assert.deepEqual(connectors, ['connector1'])
         done()
       }).catch(done)
     })
@@ -523,6 +526,24 @@ describe('Client', function () {
       client.plugin.getInfo = function () { return Promise.resolve({}) }
       client.getConnectors().then(function (connectors) {
         assert.deepEqual(connectors, [])
+        done()
+      }).catch(done)
+    })
+  })
+
+  describe('_sendAndReceiveMessage', function () {
+    it('rejects on timeout', function (done) {
+      const client = new Client({_plugin: MockPlugin}, {messageTimeout: 10})
+      const start = Date.now()
+      client._sendAndReceiveMessage({
+        ledger: 'example.blue.',
+        account: 'example.blue.mark',
+        data: {}
+      }).then((response) => {
+        assert(false)
+      }).catch((err) => {
+        assert.equal(err.message, 'Timed out while awaiting response message')
+        assert(Date.now() - start >= 10)
         done()
       }).catch(done)
     })
@@ -583,5 +604,42 @@ describe('Client', function () {
           done()
         })
     })
+
+    it('should emit `incoming_message` from plugin', function (done) {
+      const incoming = new Promise((resolve) =>
+        this.client.on('incoming_message', resolve))
+      this.client.plugin.emit('incoming_message')
+      incoming.then(() => { done() }).catch(done)
+    })
   })
 })
+
+function makeSendMessage (request, response) {
+  return function (message) {
+    request.data.id = response.data.id = message.data.id
+    assert.deepEqual(message, request)
+    process.nextTick(() => {
+      this.emit('incoming_message', response)
+    })
+    return Promise.resolve(null)
+  }
+}
+
+function makeSendQuoteMessage (quoteRequestBody, quoteResponseBody, connector) {
+  connector = connector || 'example.blue.connector1'
+  return makeSendMessage({
+    ledger: 'example.blue.',
+    account: connector,
+    data: {
+      method: 'quote_request',
+      data: quoteRequestBody
+    }
+  }, {
+    ledger: 'example.blue.',
+    account: connector,
+    data: {
+      method: 'quote_response',
+      data: quoteResponseBody
+    }
+  })
+}
