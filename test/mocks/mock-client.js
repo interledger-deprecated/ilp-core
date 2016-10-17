@@ -10,7 +10,7 @@ class MockClient extends EventEmitter {
     this.plugin.getAccount = function () { return Promise.resolve(this.prefix + 'mark') }
     this.plugin.getInfo = function () {
       return Promise.resolve({
-        connectors: [{connector: 'http://connector.example'}],
+        connectors: [{name: 'connector1'}],
         precision: 10,
         scale: 2
       })

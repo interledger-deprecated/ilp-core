@@ -1,7 +1,6 @@
 'use strict'
 
 const sinon = require('sinon')
-const nock = require('nock')
 const chai = require('chai')
 sinon.assert.expose(chai.assert, { prefix: '' })
 const chaiAsPromised = require('chai-as-promised')
@@ -18,13 +17,12 @@ const Core = require('../src/lib/core')
 describe('Core', function () {
   beforeEach(function () {
     mockRequire('ilp-plugin-mock', MockPlugin)
-    this.tables = new RoutingTables('http://mark.example', [], 10)
+    this.tables = new RoutingTables([], 10)
     this.core = new Core({routingTables: this.tables})
   })
 
   afterEach(function () {
     mockRequire.stopAll()
-    nock.cleanAll()
   })
 
   describe('constructor', function () {
@@ -52,7 +50,6 @@ describe('Core', function () {
       this.core.tables.addLocalRoutes([{
         source_ledger: 'ledger2.',
         destination_ledger: 'ledger3.',
-        connector: 'http://mark.example',
         source_account: 'ledger2.mark',
         points: [ [0, 0], [100, 50] ]
       }])
@@ -128,6 +125,24 @@ describe('Core', function () {
     })
   })
 
+  describe('removeClient', function () {
+    it('removes and returns a client', function () {
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      this.core.addClient('ledger1.', client1)
+      assert.equal(this.core.removeClient('ledger1.'), client1)
+      assert.deepEqual(this.core.clients, {})
+      assert.deepEqual(this.core.clientList, [])
+    })
+
+    it('returns undefined if no matching client is found', function () {
+      const client1 = new MockClient({prefix: 'ledger1.'})
+      this.core.addClient('ledger1.', client1)
+      assert.equal(this.core.removeClient('ledger2.'), undefined)
+      assert.deepEqual(this.core.clients, {'ledger1.': client1})
+      assert.deepEqual(this.core.clientList, [client1])
+    })
+  })
+
   describe('connect', function () {
     it('connects all clients', function * () {
       const client1 = new MockClient({prefix: 'ledger1.'})
@@ -162,11 +177,17 @@ describe('Core', function () {
     beforeEach(function () {
       this.core.addClient('group1.ledger1.', new MockClient({prefix: 'group1.ledger1.'}))
       this.core.addClient('group1.ledger2.', new MockClient({prefix: 'group1.ledger2.'}))
+      this.core.addClient('group1.ledger3.', new MockClient({prefix: 'group1.ledger3.'}))
       this.core.tables.addLocalRoutes([{
         source_ledger: 'group1.ledger1.',
         destination_ledger: 'group1.ledger2.',
-        connector: 'http://mark.example',
         source_account: 'group1.ledger1.mark',
+        min_message_window: 3,
+        points: [ [0, 0], [100, 50] ]
+      }, {
+        source_ledger: 'group1.ledger2.',
+        destination_ledger: 'group1.ledger3.',
+        source_account: 'group1.ledger2.mark',
         min_message_window: 3,
         points: [ [0, 0], [100, 50] ]
       }])
@@ -174,7 +195,6 @@ describe('Core', function () {
       this.core.tables.addRoute({
         source_ledger: 'group1.ledger2.',
         destination_ledger: 'group2.',
-        connector: 'http://mary.example',
         source_account: 'group1.ledger2.mary',
         min_message_window: 4,
         // This curve is only used for route selection, not for quoting amounts.
@@ -213,7 +233,7 @@ describe('Core', function () {
       })
     })
 
-    it('returns a quote for local ledgers (by destination amount)', function * () {
+    it('returns a quote for single-hop local ledgers (by destination amount)', function * () {
       const quote = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
         destinationAddress: 'group1.ledger2.bob',
@@ -234,7 +254,28 @@ describe('Core', function () {
       })
     })
 
-    it('returns a quote for local ledgers, with a subledger (by destination amount)', function * () {
+    it('returns a quote for multi-hop local ledgers (by destination amount)', function * () {
+      const quote = yield this.core.quote({
+        sourceAddress: 'group1.ledger1.alice',
+        destinationAddress: 'group1.ledger3.carl',
+        destinationAmount: '25.00',
+        destinationExpiryDuration: 0.5
+      })
+      assert.deepEqual(quote, {
+        sourceLedger: 'group1.ledger1.',
+        nextLedger: 'group1.ledger2.',
+        destinationLedger: 'group1.ledger3.',
+        sourceAmount: '100',
+        destinationAmount: '25.00',
+        connectorAccount: 'group1.ledger1.mark',
+        minMessageWindow: 6,
+        sourceExpiryDuration: 6.5,
+        destinationExpiryDuration: 0.5,
+        additionalInfo: undefined
+      })
+    })
+
+    it('returns a quote for single-hop local ledgers, with a subledger (by destination amount)', function * () {
       const quote = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
         destinationAddress: 'group1.ledger2.bob.request123',
@@ -255,25 +296,47 @@ describe('Core', function () {
       })
     })
 
+    it('returns a quote for multi-hop local ledgers, with a subledger (by destination amount)', function * () {
+      const quote = yield this.core.quote({
+        sourceAddress: 'group1.ledger1.alice',
+        destinationAddress: 'group1.ledger3.carl.request123',
+        destinationAmount: '25.00',
+        destinationExpiryDuration: 0.5
+      })
+      assert.deepEqual(quote, {
+        sourceLedger: 'group1.ledger1.',
+        nextLedger: 'group1.ledger2.',
+        destinationLedger: 'group1.ledger3.',
+        sourceAmount: '100',
+        destinationAmount: '25.00',
+        connectorAccount: 'group1.ledger1.mark',
+        minMessageWindow: 6,
+        sourceExpiryDuration: 6.5,
+        destinationExpiryDuration: 0.5,
+        additionalInfo: undefined
+      })
+    })
+
     it('returns a constructed quote for remote ledgers (by source amount)', function * () {
-      nock('http://mary.example')
-        .get('/quote')
-        .query({
+      this.core.getClient('group1.ledger2.')._getQuote = function (connector, quoteQuery) {
+        assert.equal(connector, 'group1.ledger2.mary')
+        assert.deepEqual(quoteQuery, {
           source_address: 'group1.ledger2.mary',
           destination_address: 'group2.ledger2.bob',
           source_amount: '50.00',
           source_expiry_duration: 8.75 - 7,
           destination_precision: '2',
           destination_scale: '1',
-          slippage: 0
+          slippage: '0'
         })
-        .reply(200, {
+        return Promise.resolve({
           destination_ledger: 'group2.ledger2.',
           source_amount: '50.00',
           destination_amount: '10.00',
           source_expiry_duration: '1.75',
           destination_expiry_duration: '0.25'
         })
+      }
 
       const quote = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
@@ -296,22 +359,23 @@ describe('Core', function () {
     })
 
     it('returns a constructed quote for remote ledgers (by destination amount)', function * () {
-      nock('http://mary.example')
-        .get('/quote')
-        .query({
+      this.core.getClient('group1.ledger2.')._getQuote = function (connector, quoteQuery) {
+        assert.equal(connector, 'group1.ledger2.mary')
+        assert.deepEqual(quoteQuery, {
           source_address: 'group1.ledger2.mary',
           destination_address: 'group2.ledger2.bob',
           destination_amount: '10.00',
           destination_expiry_duration: 0.5,
-          slippage: 0
+          slippage: '0'
         })
-        .reply(200, {
+        return Promise.resolve({
           destination_ledger: 'group2.ledger2.',
           source_amount: '50.00',
           destination_amount: '10.00',
           source_expiry_duration: '0.75',
           destination_expiry_duration: '0.5'
         })
+      }
 
       const quote = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
@@ -332,12 +396,11 @@ describe('Core', function () {
       })
     })
 
-    describe('multiple hops; no remote requests', function * () {
+    describe('multiple hops; no remote requests', function () {
       beforeEach(function () {
         this.core.tables.addRoute({
           source_ledger: 'group1.ledger2.',
           destination_ledger: 'group1.ledger3.',
-          connector: 'http://martin.example',
           source_account: 'group1.ledger2.martin',
           min_message_window: 3,
           points: [ [0, 0], [100, 50] ]
@@ -381,6 +444,27 @@ describe('Core', function () {
           connectorAccount: 'group1.ledger1.mark',
           minMessageWindow: 6,
           sourceExpiryDuration: 6.5,
+          destinationExpiryDuration: 0.5,
+          additionalInfo: undefined
+        })
+      })
+
+      it('returns a quote when there is a direct (but remote) path', function * () {
+        const quote2 = yield this.core.quote({
+          sourceAddress: 'group1.ledger1.alice',
+          destinationAddress: 'group2.bob',
+          sourceAmount: '100.00',
+          sourceExpiryDuration: '7.5'
+        })
+        assert.deepEqual(quote2, {
+          sourceLedger: 'group1.ledger1.',
+          nextLedger: 'group1.ledger2.',
+          destinationLedger: 'group2.',
+          sourceAmount: '100.00',
+          destinationAmount: '25',
+          connectorAccount: 'group1.ledger1.mark',
+          minMessageWindow: 7,
+          sourceExpiryDuration: 7.5,
           destinationExpiryDuration: 0.5,
           additionalInfo: undefined
         })

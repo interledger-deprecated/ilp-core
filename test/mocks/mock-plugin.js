@@ -32,13 +32,17 @@ class MockPlugin extends EventEmitter {
 
   getInfo () {
     return Promise.resolve({
-      connectors: [{connector: 'http://connector.example'}],
+      connectors: [{name: 'connector1'}],
       precision: 10,
       scale: 2
     })
   }
 
-  send () {
+  sendTransfer () {
+    return Promise.resolve(null)
+  }
+
+  sendMessage () {
     return Promise.resolve(null)
   }
 

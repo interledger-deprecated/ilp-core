@@ -6,7 +6,6 @@ const BigNumber = require('bignumber.js')
 const isUndefined = require('lodash/fp/isUndefined')
 const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 const RoutingTables = require('ilp-routing').RoutingTables
-const getQuote = require('./util').getQuote
 
 class Core extends EventEmitter {
   /**
@@ -18,7 +17,12 @@ class Core extends EventEmitter {
     super()
     this.clientList = [] // Client[]
     this.clients = {} // { prefix ⇒ Client }
-    this.tables = options.routingTables || new RoutingTables(null, [], null)
+    this.tables = options.routingTables || new RoutingTables([], null)
+
+    const core = this
+    this._relayEvent = function (event, arg1, arg2, arg3) {
+      return core.emitAsync(event, this, arg1, arg2, arg3)
+    }
   }
 
   /**
@@ -58,10 +62,22 @@ class Core extends EventEmitter {
       throw new Error('prefix must end with "."')
     }
 
-    client.onAny((event, arg1, arg2, arg3) =>
-      this.emitAsync(event, client, arg1, arg2, arg3))
+    client.onAny(this._relayEvent)
     this.clientList.push(client)
     this.clients[prefix] = client
+  }
+
+  /**
+   * @param {IlpAddress} prefix
+   * @returns {Client}
+   */
+  removeClient (prefix) {
+    const client = this.getClient(prefix)
+    if (!client) return
+    client.offAny(this._relayEvent)
+    this.clientList.splice(this.clientList.indexOf(client), 1)
+    delete this.clients[prefix]
+    return client
   }
 
   connect () {
@@ -104,8 +120,9 @@ class Core extends EventEmitter {
     const localQuote = Object.assign(
       getExpiryDurations(sourceExpiryDuration, destinationExpiryDuration, hop.minMessageWindow),
       hopToQuote(hop), quote)
-    const isLocalPath = hop.connector === this.tables.baseURI
+    const isLocalPath = hop.isLocal
     const isDirectPath = getLedgerPrefix(query.destinationAddress) === hop.finalLedger
+
     // If we know a local route to the destinationAddress, use the local route.
     // If the route's destination is exactly the prefix being targeted, use the local route.
     // Otherwise, ask a connector closer to the destination.
@@ -118,8 +135,10 @@ class Core extends EventEmitter {
         sourceLedger, hop.destinationCreditAccount, query.sourceAmount)
     }
 
-    const tailQuote = yield getQuote(hop.connector, omitUndefined({
-      source_address: hop.destinationCreditAccount,
+    const sourceClient = this.getClient(hop.destinationLedger)
+    const intermediateConnector = hop.destinationCreditAccount
+    const tailQuote = yield sourceClient._getQuote(intermediateConnector, omitUndefined({
+      source_address: intermediateConnector,
       source_amount: query.sourceAmount === undefined
         ? undefined
         : (yield this._roundDown(headHop.destinationLedger, headHop.destinationAmount)),
@@ -131,7 +150,7 @@ class Core extends EventEmitter {
       destination_expiry_duration: destinationExpiryDuration,
       destination_precision: destinationPrecisionAndScale.precision,
       destination_scale: destinationPrecisionAndScale.scale,
-      slippage: 0 // Slippage will be applied at the first connector, not an intermediate one.
+      slippage: '0' // Slippage will be applied at the first connector, not an intermediate one.
     }))
 
     // If no remote quote can be found, just use the local one.
@@ -140,7 +159,7 @@ class Core extends EventEmitter {
     // Quote by destination amount
     if (query.destinationAmount) {
       headHop = this.tables.findBestHopForDestinationAmount(
-        sourceLedger, hop.destinationCreditAccount, tailQuote.source_amount)
+        sourceLedger, intermediateConnector, tailQuote.source_amount)
     }
 
     const minMessageWindow = headHop.minMessageWindow +
