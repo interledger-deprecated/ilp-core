@@ -20,8 +20,10 @@ class Core extends EventEmitter {
     this.tables = options.routingTables || new RoutingTables([], null)
 
     const core = this
-    this._relayEvent = function (event, arg1, arg2, arg3) {
-      return core.emitAsync(event, this, arg1, arg2, arg3)
+    this._relayEvent = function () {
+      const event = arguments[0]
+      const args = Array.prototype.slice.call(arguments, 1)
+      return core.emitAsync.apply(core, [event, this].concat(args))
     }
   }
 
