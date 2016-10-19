@@ -177,6 +177,10 @@ class Client extends EventEmitter {
       throw new Error('executionCondition should not be used without expiresAt')
     }
 
+    if (!params.sourceAmount) throw new Error('sourceAmount must be provided')
+    if (!params.destinationAmount) throw new Error('destinationAmount must be provided')
+    if (!params.destinationAccount) throw new Error('destinationAccount must be provided')
+
     const transferData = {
       ilp_header: omitUndefined({
         account: params.destinationAccount,
@@ -244,7 +248,7 @@ class Client extends EventEmitter {
         return quoteResponse.data.data
       }
     }).catch((err) => {
-      debug('ignoring remote quote error: ' + err.message)
+      debug('getQuote: ignoring remote quote error: ' + err.message)
     })
   }
 

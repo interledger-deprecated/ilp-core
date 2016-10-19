@@ -246,7 +246,7 @@ describe('Client', function () {
     it('ignores AssetsNotTraded errors', function (done) {
       this.client.getPlugin().sendMessage = makeSendMessage({
         ledger: 'example.blue.',
-        account: 'connector1',
+        account: 'example.blue.connector1',
         data: {
           method: 'quote_request',
           data: {
@@ -257,7 +257,7 @@ describe('Client', function () {
         }
       }, {
         ledger: 'example.blue.',
-        account: 'connector1',
+        account: 'example.blue.connector1',
         data: {
           method: 'error',
           data: {id: 'AssetsNotTradedError', message: 'broken'}
@@ -381,6 +381,51 @@ describe('Client', function () {
       })
       .catch(function (err) {
         assert.equal(err.message, 'executionCondition should not be used without expiresAt')
+        done()
+      })
+    })
+
+    it('should reject if there is no sourceAmount', function (done) {
+      this.client.sendQuotedPayment({
+        connectorAccount: 'connector',
+        destinationAmount: '2',
+        destinationAccount: 'example.red.bob',
+        destinationMemo: { foo: 'bar' },
+        executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
+        expiresAt: '2016-07-02T00:00:00.000Z'
+      })
+      .catch(function (err) {
+        assert.equal(err.message, 'sourceAmount must be provided')
+        done()
+      })
+    })
+
+    it('should reject if there is no destinationAmount', function (done) {
+      this.client.sendQuotedPayment({
+        connectorAccount: 'connector',
+        sourceAmount: '1',
+        destinationAccount: 'example.red.bob',
+        destinationMemo: { foo: 'bar' },
+        executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
+        expiresAt: '2016-07-02T00:00:00.000Z'
+      })
+      .catch(function (err) {
+        assert.equal(err.message, 'destinationAmount must be provided')
+        done()
+      })
+    })
+
+    it('should reject if there is no destinationAccount', function (done) {
+      this.client.sendQuotedPayment({
+        connectorAccount: 'connector',
+        sourceAmount: '1',
+        destinationAmount: '2',
+        destinationMemo: { foo: 'bar' },
+        executionCondition: 'cc:0:3:47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU:0',
+        expiresAt: '2016-07-02T00:00:00.000Z'
+      })
+      .catch(function (err) {
+        assert.equal(err.message, 'destinationAccount must be provided')
         done()
       })
     })
