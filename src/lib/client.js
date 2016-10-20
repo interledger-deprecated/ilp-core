@@ -257,7 +257,11 @@ class Client extends EventEmitter {
     return new Promise((resolve, reject) => {
       const done = (err, res) => {
         clearTimeout(timeout)
-        this.plugin.removeListener('incoming_message', responseListener)
+        // Wait till nextTick to remove the listener so that it doesn't happen while the
+        // event is part way through being emitted, which causes issues iterating the listeners.
+        process.nextTick(() => {
+          this.plugin.removeListener('incoming_message', responseListener)
+        })
         return err ? reject(err) : resolve(res)
       }
       const responseListener = makeMessageResponseListener(reqMessage.data.id, done)
