@@ -12,8 +12,8 @@ const debug = require('debug')('ilp-core')
 
 class Client extends EventEmitter {
   /**
-   * @param {Object} pluginOpts options for the ledger plugin
-   * @param {Function} pluginOpts._plugin A ledger plugin constructor
+   * @param {Object} pluginOpts options for the ledger plugin, or an instantiated plugin object
+   * @param {Function} pluginOpts._plugin A ledger plugin constructor (if pluginOpts isn't instantiated)
    * @param {Object} [_clientOpts]
    * @param {String[]} [_clientOpts.connectors] A list of connectors to quote from
    * @param {Integer} [_clientOpts.messageTimeout] The number of milliseconds to wait for a response to sendMessage.
@@ -25,8 +25,11 @@ class Client extends EventEmitter {
       throw new TypeError('Client pluginOpts must be an object')
     }
 
-    if (typeof pluginOpts._plugin !== 'function') {
-      throw new TypeError('"pluginOpts._plugin" must be a function')
+    // if pluginOpts is an eventEmitter, then it is instantiated
+    const instantiated = (typeof pluginOpts.on === 'function')
+
+    if (!instantiated && typeof pluginOpts._plugin !== 'function') {
+      throw new TypeError('"pluginOpts._plugin" must be a function unless pluginOpts is an instantiated plugin')
     }
 
     if (_clientOpts !== undefined && typeof _clientOpts !== 'object') {
@@ -45,7 +48,7 @@ class Client extends EventEmitter {
     }
 
     const Plugin = pluginOpts._plugin
-    this.plugin = new Plugin(pluginOpts)
+    this.plugin = instantiated ? pluginOpts : (new Plugin(pluginOpts))
     this.connecting = false
 
     // listen for all events in both the incoming and outgoing directions
