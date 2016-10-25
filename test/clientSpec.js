@@ -592,6 +592,29 @@ describe('Client', function () {
         done()
       }).catch(done)
     })
+
+    it('doesn\'t reject when a listener is removed while "incoming_message" is being emitted', function (done) {
+      const client = new Client({_plugin: MockPlugin})
+      client.getPlugin().sendMessage = function (message) {
+        client.getPlugin().on('incoming_message', () => Promise.resolve(null))
+        process.nextTick(() => {
+          client.getPlugin().emitAsync('incoming_message', {
+            ledger: 'example.blue.',
+            account: 'example.blue.connector1',
+            data: {id: message.data.id}
+          })
+        })
+        return Promise.resolve(null)
+      }
+
+      client._sendAndReceiveMessage({
+        ledger: 'example.blue.',
+        account: 'example.blue.connector1',
+        data: {}
+      }).then((response) => {
+        done()
+      }).catch(done)
+    })
   })
 
   describe('events', function () {
