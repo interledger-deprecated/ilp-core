@@ -247,9 +247,7 @@ class Client extends EventEmitter {
         data: quoteQuery
       }
     }).then((quoteResponse) => {
-      if (quoteResponse.data.method === 'quote_response') {
-        return quoteResponse.data.data
-      }
+      return quoteResponse.data.data
     }).catch((err) => {
       debug('getQuote: ignoring remote quote error: ' + err.message)
     })
@@ -259,13 +257,19 @@ class Client extends EventEmitter {
     reqMessage.data.id = uuid()
     return new Promise((resolve, reject) => {
       const done = (err, res) => {
-        clearTimeout(timeout)
-        // Wait till nextTick to remove the listener so that it doesn't happen while the
-        // event is part way through being emitted, which causes issues iterating the listeners.
-        process.nextTick(() => {
-          this.plugin.removeListener('incoming_message', responseListener)
-        })
-        return err ? reject(err) : resolve(res)
+        if (err) return reject(err)
+
+        if (res.data.method === 'quote_response') {
+          clearTimeout(timeout)
+
+          // Wait till nextTick to remove the listener so that it doesn't happen while the
+          // event is part way through being emitted, which causes issues iterating the listeners.
+          process.nextTick(() => {
+            this.plugin.removeListener('incoming_message', responseListener)
+          })
+
+          resolve(res)
+        }
       }
       const responseListener = makeMessageResponseListener(reqMessage.data.id, done)
       const timeout = setTimeout(() => {
