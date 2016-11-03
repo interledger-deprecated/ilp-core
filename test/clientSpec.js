@@ -601,7 +601,7 @@ describe('Client', function () {
           client.getPlugin().emitAsync('incoming_message', {
             ledger: 'example.blue.',
             account: 'example.blue.connector1',
-            data: {id: message.data.id}
+            data: {id: message.data.id, method: 'quote_response'}
           })
         })
         return Promise.resolve(null)
