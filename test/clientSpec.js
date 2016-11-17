@@ -676,8 +676,11 @@ describe('Client', function () {
     it('should emit `incoming_message` from plugin', function (done) {
       const incoming = new Promise((resolve) =>
         this.client.on('incoming_message', resolve))
-      this.client.plugin.emit('incoming_message')
-      incoming.then(() => { done() }).catch(done)
+      this.client.plugin.emit('incoming_message', {})
+      incoming.then(() => {
+        assert.deepEqual(this.client.pendingMessages, {})
+        done()
+      }).catch(done)
     })
   })
 })
