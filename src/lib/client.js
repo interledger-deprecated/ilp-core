@@ -39,6 +39,7 @@ class Client extends EventEmitter {
     const clientOpts = _clientOpts || {}
     this.connectors = clientOpts.connectors
     this.messageTimeout = clientOpts.messageTimeout === undefined ? 10000 : clientOpts.messageTimeout
+    this.pendingMessages = {} // { requestId ⇒ {resolve, reject, timeout} }
 
     if (this.connectors !== undefined && !Array.isArray(this.connectors)) {
       throw new TypeError('"clientOpts.connectors" must be an Array or undefined')
@@ -67,6 +68,7 @@ class Client extends EventEmitter {
     }
     this.plugin.on('incoming_message', (message) =>
       this.emitAsync('incoming_message', message))
+    this.plugin.on('incoming_message', this._onIncomingMessage.bind(this))
 
     this._extensions = {}
   }
@@ -254,43 +256,36 @@ class Client extends EventEmitter {
   }
 
   _sendAndReceiveMessage (reqMessage) {
-    reqMessage.data.id = uuid()
+    const id = reqMessage.data.id = uuid()
     return new Promise((resolve, reject) => {
-      const done = (err, res) => {
-        if (err) return reject(err)
-
-        if (res.data.method === 'quote_response') {
-          clearTimeout(timeout)
-
-          // Wait till nextTick to remove the listener so that it doesn't happen while the
-          // event is part way through being emitted, which causes issues iterating the listeners.
-          process.nextTick(() => {
-            this.plugin.removeListener('incoming_message', responseListener)
-          })
-
-          resolve(res)
-        }
-      }
-      const responseListener = makeMessageResponseListener(reqMessage.data.id, done)
       const timeout = setTimeout(() => {
-        done(new Error('Timed out while awaiting response message'))
+        reject(new Error('Timed out while awaiting response message'))
       }, this.messageTimeout)
-
-      this.plugin.on('incoming_message', responseListener)
-      this.plugin.sendMessage(reqMessage).catch(done)
+      this.pendingMessages[id] = {resolve, reject, timeout}
+      this.plugin.sendMessage(reqMessage).catch((err) => {
+        reject(err)
+        clearTimeout(timeout)
+        delete this.pendingMessages[id]
+      })
     })
   }
-}
 
-function makeMessageResponseListener (requestId, done) {
-  return function (resMessage) {
-    if (!resMessage.data) return
-    // Ignore notifications other than the response.
-    if (resMessage.data.id !== requestId) return
-    if (resMessage.data.method === 'error') {
-      return done(Error(resMessage.data.data.message))
+  _onIncomingMessage (resMessage) {
+    const resData = resMessage.data
+    if (!resData) return
+    // Find the matching outgoing message, if any.
+    const pendingMessage = this.pendingMessages[resData.id]
+    if (!pendingMessage) return
+
+    if (resData.method === 'error') {
+      pendingMessage.reject(new Error(resData.data.message))
+    } else if (resData.method === 'quote_response') {
+      pendingMessage.resolve(resMessage)
+    } else {
+      return
     }
-    done(null, resMessage)
+    clearTimeout(pendingMessage.timeout)
+    delete this.pendingMessages[resData.id]
   }
 }
 
