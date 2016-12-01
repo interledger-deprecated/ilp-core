@@ -82,8 +82,8 @@ class Core extends EventEmitter {
     return client
   }
 
-  connect () {
-    return Promise.all(this.clientList.map((client) => client.connect()))
+  connect (options) {
+    return Promise.all(this.clientList.map((client) => client.connect(options)))
   }
 
   disconnect () {

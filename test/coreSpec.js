@@ -152,9 +152,11 @@ describe('Core', function () {
 
       const spy1 = sinon.spy(client1, 'connect')
       const spy2 = sinon.spy(client2, 'connect')
-      yield this.core.connect()
+      yield this.core.connect({timeout: 123})
       assert.calledOnce(spy1)
       assert.calledOnce(spy2)
+      assert.calledWith(spy1.firstCall, {timeout: 123})
+      assert.calledWith(spy2.firstCall, {timeout: 123})
     })
   })
 
