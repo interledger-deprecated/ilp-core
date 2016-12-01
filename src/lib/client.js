@@ -94,9 +94,9 @@ class Client extends EventEmitter {
     return this.plugin.fulfillCondition(transferId, fulfillment)
   }
 
-  connect () {
+  connect (options) {
     this.connecting = true
-    return this.plugin.connect()
+    return this.plugin.connect(options)
   }
 
   disconnect () {

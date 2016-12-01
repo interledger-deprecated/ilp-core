@@ -68,6 +68,17 @@ describe('Client', function () {
       sinon.assert.calledOnce(stubConnect)
       stubConnect.restore()
     })
+
+    it('relays options', function * () {
+      const client = new Client({ _plugin: MockPlugin })
+      const stubConnect = sinon.stub(client.getPlugin(), 'connect')
+
+      client.connect({timeout: 123})
+
+      sinon.assert.calledOnce(stubConnect)
+      sinon.assert.calledWith(stubConnect.firstCall, {timeout: 123})
+      stubConnect.restore()
+    })
   })
 
   describe('disconnect', function () {
