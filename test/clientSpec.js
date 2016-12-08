@@ -110,19 +110,6 @@ describe('Client', function () {
     })
   })
 
-  describe('waitForConnection', function () {
-    it('should return a rejected promise if not currently connecting', function * () {
-      const client = new Client({
-        _plugin: MockPlugin
-      })
-
-      client.disconnect()
-      const promise = client.waitForConnection()
-
-      yield assert.isRejected(promise)
-    })
-  })
-
   describe('quote', function () {
     beforeEach(function () {
       this.client = new Client({

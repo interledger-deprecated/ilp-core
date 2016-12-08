@@ -77,19 +77,6 @@ class Client extends EventEmitter {
     return this.plugin
   }
 
-  waitForConnection () {
-    // First check if we're even trying to connect
-    if (!this.connecting) {
-      return Promise.reject(new Error('Plugin is set to disconnected state'))
-    }
-
-    // If we're already connected, just return
-    if (this.plugin.isConnected()) return Promise.resolve(null)
-
-    // Otherwise wait until we're connected
-    return new Promise((resolve) => this.plugin.once('connect', resolve))
-  }
-
   fulfillCondition (transferId, fulfillment) {
     return this.plugin.fulfillCondition(transferId, fulfillment)
   }
