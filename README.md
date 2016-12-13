@@ -68,7 +68,7 @@ const payment = {
 }
 
 const client = core.getClient('ilpdemo.red.')
-client.waitForConnection().then(() => {
+client.connect().then(() => {
   return client.quote({
     destinationAddress: payment.destinationAccount,
     destinationAmount: payment.destinationAmount,
