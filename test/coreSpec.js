@@ -191,7 +191,9 @@ describe('Core', function () {
         destination_ledger: 'group1.ledger3.',
         source_account: 'group1.ledger2.mark',
         min_message_window: 3,
-        points: [ [0, 0], [100, 50] ]
+        points: [ [0, 0], [100, 50] ],
+        destination_precision: 10,
+        destination_scale: 2
       }])
       // Remote route
       this.core.tables.addRoute({
@@ -230,8 +232,7 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 3,
         sourceExpiryDuration: 3.5,
-        destinationExpiryDuration: 0.5,
-        additionalInfo: undefined
+        destinationExpiryDuration: 0.5
       })
     })
 
@@ -251,8 +252,7 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 3,
         sourceExpiryDuration: 3.5,
-        destinationExpiryDuration: 0.5,
-        additionalInfo: undefined
+        destinationExpiryDuration: 0.5
       })
     })
 
@@ -269,11 +269,11 @@ describe('Core', function () {
         destinationLedger: 'group1.ledger3.',
         sourceAmount: '100',
         destinationAmount: '25.00',
+        destinationPrecisionAndScale: {precision: 10, scale: 2},
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 6,
         sourceExpiryDuration: 6.5,
-        destinationExpiryDuration: 0.5,
-        additionalInfo: undefined
+        destinationExpiryDuration: 0.5
       })
     })
 
@@ -293,8 +293,7 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 3,
         sourceExpiryDuration: 3.5,
-        destinationExpiryDuration: 0.5,
-        additionalInfo: undefined
+        destinationExpiryDuration: 0.5
       })
     })
 
@@ -311,11 +310,11 @@ describe('Core', function () {
         destinationLedger: 'group1.ledger3.',
         sourceAmount: '100',
         destinationAmount: '25.00',
+        destinationPrecisionAndScale: {precision: 10, scale: 2},
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 6,
         sourceExpiryDuration: 6.5,
-        destinationExpiryDuration: 0.5,
-        additionalInfo: undefined
+        destinationExpiryDuration: 0.5
       })
     })
 
@@ -422,11 +421,11 @@ describe('Core', function () {
           destinationLedger: 'group1.ledger3.',
           sourceAmount: '100.00',
           destinationAmount: '25',
+          destinationPrecisionAndScale: {precision: 10, scale: 2},
           connectorAccount: 'group1.ledger1.mark',
           minMessageWindow: 6,
           sourceExpiryDuration: 6.5,
-          destinationExpiryDuration: 0.5,
-          additionalInfo: undefined
+          destinationExpiryDuration: 0.5
         })
       })
 
@@ -443,11 +442,11 @@ describe('Core', function () {
           destinationLedger: 'group1.ledger3.',
           sourceAmount: '100.00',
           destinationAmount: '25',
+          destinationPrecisionAndScale: {precision: 10, scale: 2},
           connectorAccount: 'group1.ledger1.mark',
           minMessageWindow: 6,
           sourceExpiryDuration: 6.5,
-          destinationExpiryDuration: 0.5,
-          additionalInfo: undefined
+          destinationExpiryDuration: 0.5
         })
       })
 
@@ -467,8 +466,7 @@ describe('Core', function () {
           connectorAccount: 'group1.ledger1.mark',
           minMessageWindow: 7,
           sourceExpiryDuration: 7.5,
-          destinationExpiryDuration: 0.5,
-          additionalInfo: undefined
+          destinationExpiryDuration: 0.5
         })
       })
     })
