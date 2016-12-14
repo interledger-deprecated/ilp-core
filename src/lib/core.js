@@ -171,6 +171,8 @@ class Core extends EventEmitter {
       destinationLedger: tailQuote.destination_ledger,
       sourceAmount: headHop.sourceAmount,
       destinationAmount: tailQuote.destination_amount,
+      // No need for destinationPrecisionAndScale because the tailQuote was
+      // already rounded by the intermediate connector.
       minMessageWindow: minMessageWindow
     }, quote, getExpiryDurations(sourceExpiryDuration, destinationExpiryDuration, minMessageWindow))
   }
@@ -191,14 +193,20 @@ class Core extends EventEmitter {
 }
 
 function hopToQuote (hop) {
-  return {
+  const precisionAndScale = hop.finalPrecision && {
+    precision: hop.finalPrecision,
+    scale: hop.finalScale
+  }
+  return omitUndefined({
     nextLedger: hop.destinationLedger,
     destinationLedger: hop.finalLedger,
     sourceAmount: hop.sourceAmount,
     destinationAmount: hop.finalAmount,
+    // Include the hop's precision and scale because the finalAmount hasn't been rounded yet.
+    destinationPrecisionAndScale: precisionAndScale,
     minMessageWindow: hop.minMessageWindow,
     additionalInfo: hop.additionalInfo
-  }
+  })
 }
 
 /**
