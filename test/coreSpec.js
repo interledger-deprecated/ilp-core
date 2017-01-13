@@ -325,7 +325,7 @@ describe('Core', function () {
           source_address: 'group1.ledger2.mary',
           destination_address: 'group2.ledger2.bob',
           source_amount: '50.00',
-          source_expiry_duration: 8.75 - 7,
+          source_expiry_duration: 8.75 - 3,
           destination_precision: '2',
           destination_scale: '1',
           slippage: '0'
@@ -449,25 +449,25 @@ describe('Core', function () {
           destinationExpiryDuration: 0.5
         })
       })
+    })
 
-      it('returns a quote when there is a direct (but remote) path', function * () {
-        const quote2 = yield this.core.quote({
-          sourceAddress: 'group1.ledger1.alice',
-          destinationAddress: 'group2.bob',
-          sourceAmount: '100.00',
-          sourceExpiryDuration: '7.5'
-        })
-        assert.deepEqual(quote2, {
-          sourceLedger: 'group1.ledger1.',
-          nextLedger: 'group1.ledger2.',
-          destinationLedger: 'group2.',
-          sourceAmount: '100.00',
-          destinationAmount: '25',
-          connectorAccount: 'group1.ledger1.mark',
-          minMessageWindow: 7,
-          sourceExpiryDuration: 7.5,
-          destinationExpiryDuration: 0.5
-        })
+    it('returns a quote when there is a direct (but remote) path', function * () {
+      const quote2 = yield this.core.quote({
+        sourceAddress: 'group1.ledger1.alice',
+        destinationAddress: 'group2.bob',
+        sourceAmount: '100.00',
+        sourceExpiryDuration: '7.5'
+      })
+      assert.deepEqual(quote2, {
+        sourceLedger: 'group1.ledger1.',
+        nextLedger: 'group1.ledger2.',
+        destinationLedger: 'group2.',
+        sourceAmount: '100.00',
+        destinationAmount: '25',
+        connectorAccount: 'group1.ledger1.mark',
+        minMessageWindow: 7,
+        sourceExpiryDuration: 7.5,
+        destinationExpiryDuration: 0.5
       })
     })
   })

@@ -15,7 +15,7 @@ class Client extends EventEmitter {
    * @param {Object} pluginOpts options for the ledger plugin, or an instantiated plugin object
    * @param {Function} pluginOpts._plugin A ledger plugin constructor (if pluginOpts isn't instantiated)
    * @param {Object} [_clientOpts]
-   * @param {String[]} [_clientOpts.connectors] A list of connectors to quote from
+   * @param {IlpAddress[]} [_clientOpts.connectors] A list of connectors to quote from
    * @param {Integer} [_clientOpts.messageTimeout] The number of milliseconds to wait for a response to sendMessage.
    */
   constructor (pluginOpts, _clientOpts) {
@@ -109,7 +109,7 @@ class Client extends EventEmitter {
       if (params.sourceAmount ? params.destinationAmount : !params.destinationAmount) {
         throw new Error('Should provide source or destination amount but not both')
       }
-      const prefix = yield plugin.getPrefix()
+      const prefix = plugin.getInfo().prefix
       // Same-ledger payment
       if (startsWith(prefix, params.destinationAddress)) {
         const amount = params.sourceAmount || params.destinationAmount
@@ -121,7 +121,7 @@ class Client extends EventEmitter {
       }
 
       const quoteQuery = omitUndefined({
-        source_address: (yield plugin.getAccount()),
+        source_address: plugin.getAccount(),
         source_amount: params.sourceAmount,
         destination_address: params.destinationAddress,
         destination_amount: params.destinationAmount,
@@ -131,7 +131,7 @@ class Client extends EventEmitter {
       })
       const connectors = params.connectors || (yield _this.getConnectors())
       const quotes = (yield connectors.map((connector) => {
-        return _this._getQuote(prefix + connector, quoteQuery)
+        return _this._getQuote(connector, quoteQuery)
       })).filter(notUndefined)
       if (quotes.length === 0) return
       const bestQuote = quotes.reduce(getCheaperQuote)
@@ -157,21 +157,23 @@ class Client extends EventEmitter {
    * @return {Promise.<Object>} Resolves when the payment has been submitted to the plugin
    */
   sendQuotedPayment (params) {
-    return co.wrap(this._sendQuotedPayment).call(this, params)
-  }
-
-  * _sendQuotedPayment (params) {
     if (!params.executionCondition && !params.unsafeOptimisticTransport) {
-      throw new Error('executionCondition must be provided unless unsafeOptimisticTransport is true')
+      return Promise.reject(new Error('executionCondition must be provided unless unsafeOptimisticTransport is true'))
     }
 
     if (params.executionCondition && !params.expiresAt) {
-      throw new Error('executionCondition should not be used without expiresAt')
+      return Promise.reject(new Error('executionCondition should not be used without expiresAt'))
     }
 
-    if (!params.sourceAmount) throw new Error('sourceAmount must be provided')
-    if (!params.destinationAmount) throw new Error('destinationAmount must be provided')
-    if (!params.destinationAccount) throw new Error('destinationAccount must be provided')
+    if (!params.sourceAmount) {
+      return Promise.reject(new Error('sourceAmount must be provided'))
+    }
+    if (!params.destinationAmount) {
+      return Promise.reject(new Error('destinationAmount must be provided'))
+    }
+    if (!params.destinationAccount) {
+      return Promise.reject(new Error('destinationAccount must be provided'))
+    }
 
     const transferData = {
       ilp_header: omitUndefined({
@@ -180,12 +182,12 @@ class Client extends EventEmitter {
         data: params.destinationMemo
       })
     }
-    const prefix = yield this.plugin.getPrefix()
+    const prefix = this.plugin.getInfo().prefix
 
     // Same-ledger payment
     if (!params.connectorAccount) {
       if (params.sourceAmount !== params.destinationAmount) {
-        throw new Error('sourceAmount and destinationAmount must be equivalent for local transfers')
+        return Promise.reject(new Error('sourceAmount and destinationAmount must be equivalent for local transfers'))
       }
       return this.plugin.sendTransfer(omitUndefined({
         id: params.uuid || uuid.v4(),
@@ -214,20 +216,19 @@ class Client extends EventEmitter {
   }
 
   /**
-   * Get the list of connector names.
-   * @returns {Promise.<String[]>}
+   * Get the list of connector addresses.
+   * @returns {Promise.<IlpAddress[]>}
    */
   getConnectors () {
     if (this.connectors) return Promise.resolve(this.connectors)
-    return this.plugin.getInfo().then((info) => {
-      if (!info.connectors) return []
-      return info.connectors.map((connector) => connector.name)
-    })
+    const info = this.plugin.getInfo()
+    const connectorAddresses = info.connectors || []
+    return Promise.resolve(connectorAddresses)
   }
 
-  * _getQuote (connectorAddress, quoteQuery) {
+  _getQuote (connectorAddress, quoteQuery) {
     debug('remote quote connector=' + connectorAddress + ' query=' + JSON.stringify(quoteQuery))
-    const prefix = yield this.plugin.getPrefix()
+    const prefix = this.plugin.getInfo().prefix
     return this._sendAndReceiveMessage({
       ledger: prefix,
       account: connectorAddress,
