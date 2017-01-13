@@ -229,7 +229,7 @@ describe('Client', function () {
       this.client.quote({
         destinationAddress: 'example.red',
         destinationAmount: '1',
-        connectors: ['connector2']
+        connectors: ['example.blue.connector2']
       })
       .then(function (quote) {
         assert.deepEqual(quote, {
@@ -315,8 +315,8 @@ describe('Client', function () {
         plugin.sendMessage = sendMessage1
         assert.deepEqual(yield this.client.quote({
           connectors: [
-            'connector1',
-            'connector2'
+            'example.blue.connector1',
+            'example.blue.connector2'
           ],
           destinationAddress: 'example.red',
           destinationAmount: '1'
@@ -559,14 +559,14 @@ describe('Client', function () {
     it('returns plugin.getInfo().connectors if no connectors are configured', function (done) {
       const client = new Client({_plugin: MockPlugin})
       client.getConnectors().then(function (connectors) {
-        assert.deepEqual(connectors, ['connector1'])
+        assert.deepEqual(connectors, ['example.blue.connector1'])
         done()
       }).catch(done)
     })
 
     it('returns [] if no connectors are found', function (done) {
       const client = new Client({_plugin: MockPlugin})
-      client.plugin.getInfo = function () { return Promise.resolve({}) }
+      client.plugin.getInfo = function () { return {} }
       client.getConnectors().then(function (connectors) {
         assert.deepEqual(connectors, [])
         done()

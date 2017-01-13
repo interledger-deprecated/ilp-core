@@ -22,20 +22,17 @@ class MockPlugin extends EventEmitter {
     return this.connected
   }
 
-  getPrefix () {
-    return Promise.resolve('example.blue.')
-  }
-
   getAccount () {
-    return Promise.resolve('example.blue.mark')
+    return 'example.blue.mark'
   }
 
   getInfo () {
-    return Promise.resolve({
-      connectors: [{name: 'connector1'}],
+    return {
+      prefix: 'example.blue.',
+      connectors: ['example.blue.connector1'],
       precision: 10,
       scale: 2
-    })
+    }
   }
 
   sendTransfer () {

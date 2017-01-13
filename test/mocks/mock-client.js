@@ -6,14 +6,14 @@ class MockClient extends EventEmitter {
   constructor (opts) {
     super()
     this.plugin = opts
-    this.plugin.getPrefix = function () { return Promise.resolve(this.prefix) }
-    this.plugin.getAccount = function () { return Promise.resolve(this.prefix + 'mark') }
+    this.plugin.getAccount = function () { return this.prefix + 'mark' }
     this.plugin.getInfo = function () {
-      return Promise.resolve({
-        connectors: [{name: 'connector1'}],
+      return {
+        prefix: this.prefix,
+        connectors: ['example.blue.connector1'],
         precision: 10,
         scale: 2
-      })
+      }
     }
   }
 

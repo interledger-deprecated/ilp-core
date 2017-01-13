@@ -112,7 +112,7 @@ class Core extends EventEmitter {
     if (!hop) return null
 
     const sourceLedger = hop.sourceLedger
-    const connectorAccount = yield this.getPlugin(sourceLedger).getAccount()
+    const connectorAccount = this.getPlugin(sourceLedger).getAccount()
     const sourceExpiryDuration = parseDuration(query.sourceExpiryDuration)
     const destinationExpiryDuration = (sourceExpiryDuration || query.destinationExpiryDuration)
       ? parseDuration(query.destinationExpiryDuration) : 5
@@ -146,8 +146,8 @@ class Core extends EventEmitter {
         : (yield this._roundDown(headHop.destinationLedger, headHop.destinationAmount)),
       destination_address: query.destinationAddress,
       destination_amount: query.sourceAmount === undefined ? hop.finalAmount : undefined,
-      source_expiry_duration: sourceExpiryDuration
-        ? (sourceExpiryDuration - hop.minMessageWindow)
+      source_expiry_duration: (sourceExpiryDuration && headHop)
+        ? (sourceExpiryDuration - headHop.minMessageWindow)
         : undefined,
       destination_expiry_duration: destinationExpiryDuration,
       destination_precision: destinationPrecisionAndScale.precision,
@@ -186,7 +186,7 @@ class Core extends EventEmitter {
   }
 
   * _roundDown (ledger, amount) {
-    const info = yield this.getPlugin(ledger).getInfo()
+    const info = this.getPlugin(ledger).getInfo()
     const roundedAmount = new BigNumber(amount).toFixed(info.scale, BigNumber.ROUND_DOWN)
     return roundedAmount.toString()
   }
