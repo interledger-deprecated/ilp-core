@@ -5,19 +5,19 @@ const EventEmitter = require('eventemitter2')
 const BigNumber = require('bignumber.js')
 const isUndefined = require('lodash/fp/isUndefined')
 const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
-const RoutingTables = require('ilp-routing').RoutingTables
+const routing = require('ilp-routing')
 
 class Core extends EventEmitter {
   /**
    * @param {Object} options
-   * @param {five-bells-routing.RoutingTables} options.routingTables
+   * @param {ilp-routing.RoutingTables} options.routingTables
    */
   constructor (options) {
     if (!options) options = {}
     super()
     this.clientList = [] // Client[]
     this.clients = {} // { prefix ⇒ Client }
-    this.tables = options.routingTables || new RoutingTables([], null)
+    this.tables = options.routingTables || new routing.RoutingTables([], null)
 
     const core = this
     this._relayEvent = function () {
@@ -166,6 +166,9 @@ class Core extends EventEmitter {
 
     const minMessageWindow = headHop.minMessageWindow +
       (parseFloat(tailQuote.source_expiry_duration) - parseFloat(tailQuote.destination_expiry_duration))
+    const curve = tailQuote.liquidity_curve &&
+      (new routing.LiquidityCurve(headHop.liquidityCurve)).join(
+        new routing.LiquidityCurve(tailQuote.liquidity_curve)).getPoints()
     return Object.assign({
       nextLedger: headHop.destinationLedger,
       destinationLedger: tailQuote.destination_ledger,
@@ -173,7 +176,8 @@ class Core extends EventEmitter {
       destinationAmount: tailQuote.destination_amount,
       // No need for destinationPrecisionAndScale because the tailQuote was
       // already rounded by the intermediate connector.
-      minMessageWindow: minMessageWindow
+      minMessageWindow: minMessageWindow,
+      liquidityCurve: curve
     }, quote, getExpiryDurations(sourceExpiryDuration, destinationExpiryDuration, minMessageWindow))
   }
 
@@ -205,6 +209,7 @@ function hopToQuote (hop) {
     // Include the hop's precision and scale because the finalAmount hasn't been rounded yet.
     destinationPrecisionAndScale: precisionAndScale,
     minMessageWindow: hop.minMessageWindow,
+    liquidityCurve: hop.liquidityCurve,
     additionalInfo: hop.additionalInfo
   })
 }

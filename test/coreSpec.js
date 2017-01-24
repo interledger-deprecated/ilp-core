@@ -232,7 +232,8 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 3,
         sourceExpiryDuration: 3.5,
-        destinationExpiryDuration: 0.5
+        destinationExpiryDuration: 0.5,
+        liquidityCurve: [ [0, 0], [100, 50] ]
       })
     })
 
@@ -252,7 +253,8 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 3,
         sourceExpiryDuration: 3.5,
-        destinationExpiryDuration: 0.5
+        destinationExpiryDuration: 0.5,
+        liquidityCurve: [ [0, 0], [100, 50] ]
       })
     })
 
@@ -273,7 +275,8 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 6,
         sourceExpiryDuration: 6.5,
-        destinationExpiryDuration: 0.5
+        destinationExpiryDuration: 0.5,
+        liquidityCurve: [ [0, 0], [100, 25] ]
       })
     })
 
@@ -293,7 +296,8 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 3,
         sourceExpiryDuration: 3.5,
-        destinationExpiryDuration: 0.5
+        destinationExpiryDuration: 0.5,
+        liquidityCurve: [ [0, 0], [100, 50] ]
       })
     })
 
@@ -314,7 +318,8 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 6,
         sourceExpiryDuration: 6.5,
-        destinationExpiryDuration: 0.5
+        destinationExpiryDuration: 0.5,
+        liquidityCurve: [ [0, 0], [100, 25] ]
       })
     })
 
@@ -335,7 +340,8 @@ describe('Core', function () {
           source_amount: '50.00',
           destination_amount: '10.00',
           source_expiry_duration: '1.75',
-          destination_expiry_duration: '0.25'
+          destination_expiry_duration: '0.25',
+          liquidity_curve: [ [0, 0], [100, 20] ]
         })
       }
 
@@ -355,7 +361,8 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 4.5,
         sourceExpiryDuration: 8.75,
-        destinationExpiryDuration: 4.25
+        destinationExpiryDuration: 4.25,
+        liquidityCurve: [ [0, 0], [100, 10] ]
       })
     })
 
@@ -374,7 +381,8 @@ describe('Core', function () {
           source_amount: '50.00',
           destination_amount: '10.00',
           source_expiry_duration: '0.75',
-          destination_expiry_duration: '0.5'
+          destination_expiry_duration: '0.5',
+          liquidity_curve: [ [0, 0], [100, 20] ]
         })
       }
 
@@ -393,60 +401,43 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 3.25,
         sourceExpiryDuration: 3.75,
-        destinationExpiryDuration: 0.5
+        destinationExpiryDuration: 0.5,
+        liquidityCurve: [ [0, 0], [100, 10] ]
       })
     })
 
-    describe('multiple hops; no remote requests', function () {
+    describe('multiple hops; non-local; no remote requests', function () {
       beforeEach(function () {
         this.core.tables.addRoute({
           source_ledger: 'group1.ledger2.',
-          destination_ledger: 'group1.ledger3.',
+          destination_ledger: 'group1.ledger4.',
           source_account: 'group1.ledger2.martin',
           min_message_window: 3,
-          points: [ [0, 0], [100, 50] ]
+          points: [ [0, 0], [100, 50] ],
+          destination_precision: 10,
+          destination_scale: 2
         })
       })
 
       it('returns a quote', function * () {
         const quote1 = yield this.core.quote({
           sourceAddress: 'group1.ledger1.alice',
-          destinationAddress: 'group1.ledger3.bob',
+          destinationAddress: 'group1.ledger4.bob',
           sourceAmount: '100.00',
           sourceExpiryDuration: '6.5'
         })
         assert.deepEqual(quote1, {
           sourceLedger: 'group1.ledger1.',
           nextLedger: 'group1.ledger2.',
-          destinationLedger: 'group1.ledger3.',
+          destinationLedger: 'group1.ledger4.',
           sourceAmount: '100.00',
           destinationAmount: '25',
           destinationPrecisionAndScale: {precision: 10, scale: 2},
           connectorAccount: 'group1.ledger1.mark',
           minMessageWindow: 6,
           sourceExpiryDuration: 6.5,
-          destinationExpiryDuration: 0.5
-        })
-      })
-
-      it('returns a quote when there is a subledger', function * () {
-        const quote2 = yield this.core.quote({
-          sourceAddress: 'group1.ledger1.alice',
-          destinationAddress: 'group1.ledger3.bob.request123',
-          sourceAmount: '100.00',
-          sourceExpiryDuration: '6.5'
-        })
-        assert.deepEqual(quote2, {
-          sourceLedger: 'group1.ledger1.',
-          nextLedger: 'group1.ledger2.',
-          destinationLedger: 'group1.ledger3.',
-          sourceAmount: '100.00',
-          destinationAmount: '25',
-          destinationPrecisionAndScale: {precision: 10, scale: 2},
-          connectorAccount: 'group1.ledger1.mark',
-          minMessageWindow: 6,
-          sourceExpiryDuration: 6.5,
-          destinationExpiryDuration: 0.5
+          destinationExpiryDuration: 0.5,
+          liquidityCurve: [ [0, 0], [100, 25] ]
         })
       })
     })
@@ -467,7 +458,8 @@ describe('Core', function () {
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 7,
         sourceExpiryDuration: 7.5,
-        destinationExpiryDuration: 0.5
+        destinationExpiryDuration: 0.5,
+        liquidityCurve: [ [0, 0], [100, 25] ]
       })
     })
   })
