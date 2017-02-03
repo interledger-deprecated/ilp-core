@@ -6,6 +6,7 @@ const BigNumber = require('bignumber.js')
 const isUndefined = require('lodash/fp/isUndefined')
 const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 const routing = require('ilp-routing')
+const debug = require('debug')('ilp-core')
 
 class Core extends EventEmitter {
   /**
@@ -128,7 +129,9 @@ class Core extends EventEmitter {
     // If we know a local route to the destinationAddress, use the local route.
     // If the route's destination is exactly the prefix being targeted, use the local route.
     // Otherwise, ask a connector closer to the destination.
-    if (isLocalPath || isDirectPath) return localQuote
+    // if (isLocalPath || isDirectPath) return localQuote
+    if (isLocalPath) return localQuote
+    if (isDirectPath) debug('quote is direct, but multi-hop-direct is disabled')
 
     let headHop
     // Quote by source amount
@@ -156,7 +159,11 @@ class Core extends EventEmitter {
     }))
 
     // If no remote quote can be found, just use the local one.
-    if (!tailQuote) return localQuote
+    // if (!tailQuote) return localQuote
+    if (!tailQuote) {
+      debug('_quote no tailQuote - returning null!')
+      return null
+    }
 
     // Quote by destination amount
     if (query.destinationAmount) {

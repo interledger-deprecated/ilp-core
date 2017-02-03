@@ -406,7 +406,10 @@ describe('Core', function () {
       })
     })
 
-    describe('multiple hops; non-local; no remote requests', function () {
+    // note: the functionality this tests has been disabled, to allow
+    // for a less chatty broadcast system, but it may be re-enabled more
+    // or less as-is, depending on further improvements
+    describe.skip('multiple hops; non-local; no remote requests', function () {
       beforeEach(function () {
         this.core.tables.addRoute({
           source_ledger: 'group1.ledger2.',
@@ -441,8 +444,7 @@ describe('Core', function () {
         })
       })
     })
-
-    it('returns a quote when there is a direct (but remote) path', function * () {
+    it.skip('returns a quote when there is a direct (but remote) path', function * () {
       const quote2 = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
         destinationAddress: 'group2.bob',
