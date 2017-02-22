@@ -63,7 +63,7 @@ const payment = {
   destinationMemo: {
     myKey: 'myValue'
   },
-  executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+  executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
   expiresAt: (new Date(Date.now() + 10000)).toISOString()
 }
 
@@ -102,7 +102,7 @@ core.on('fulfill_execution_condition', (client, transfer, fulfillment) => {
 ``` js
 core.on('receive', (client, transfer) => {
   console.log(transfer)
-  client.fulfillCondition(transfer.id, 'oAKAAA')
+  client.fulfillCondition(transfer.id, 'HS8e5Ew02XKAglyus2dh2Ohabuqmy3HDM8EXMLz22ok')
 })
 ```
 
