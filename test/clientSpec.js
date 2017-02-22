@@ -102,10 +102,10 @@ describe('Client', function () {
       })
       const stubDisconnect = sinon.stub(client.getPlugin(), 'fulfillCondition')
 
-      client.fulfillCondition({ foo: true }, 'oAKAAA')
+      client.fulfillCondition({ foo: true }, 'HS8e5Ew02XKAglyus2dh2Ohabuqmy3HDM8EXMLz22ok')
 
       sinon.assert.calledOnce(stubDisconnect)
-      sinon.assert.calledWith(stubDisconnect, { foo: true }, 'oAKAAA')
+      sinon.assert.calledWith(stubDisconnect, { foo: true }, 'HS8e5Ew02XKAglyus2dh2Ohabuqmy3HDM8EXMLz22ok')
       stubDisconnect.restore()
     })
   })
@@ -375,7 +375,7 @@ describe('Client', function () {
         destinationMemo: {
           foo: 'bar'
         },
-        executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0'
+        executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U'
       })
       .catch(function (err) {
         assert.equal(err.message, 'executionCondition should not be used without expiresAt')
@@ -389,7 +389,7 @@ describe('Client', function () {
         destinationAmount: '2',
         destinationAccount: 'example.red.bob',
         destinationMemo: { foo: 'bar' },
-        executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+        executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
         expiresAt: '2016-07-02T00:00:00.000Z'
       })
       .catch(function (err) {
@@ -404,7 +404,7 @@ describe('Client', function () {
         sourceAmount: '1',
         destinationAccount: 'example.red.bob',
         destinationMemo: { foo: 'bar' },
-        executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+        executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
         expiresAt: '2016-07-02T00:00:00.000Z'
       })
       .catch(function (err) {
@@ -419,7 +419,7 @@ describe('Client', function () {
         sourceAmount: '1',
         destinationAmount: '2',
         destinationMemo: { foo: 'bar' },
-        executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+        executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
         expiresAt: '2016-07-02T00:00:00.000Z'
       })
       .catch(function (err) {
@@ -437,7 +437,7 @@ describe('Client', function () {
         destinationAmount: '2',
         destinationAccount: 'example.red.bob',
         destinationMemo: { foo: 'bar' },
-        executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+        executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
         expiresAt: '2016-07-02T00:00:00.000Z',
         uuid: 'abcdef'
       })
@@ -454,7 +454,7 @@ describe('Client', function () {
               data: { foo: 'bar' }
             }
           },
-          executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+          executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
           expiresAt: '2016-07-02T00:00:00.000Z'
         })
         done()
@@ -503,7 +503,7 @@ describe('Client', function () {
           sourceAmount: '1',
           destinationAmount: '1',
           destinationAccount: 'example.blue.bob',
-          executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+          executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
           expiresAt: '2016-07-02T00:00:00.000Z',
           destinationMemo: { foo: 'bar' },
           uuid: 'abcdef'
@@ -514,7 +514,7 @@ describe('Client', function () {
             account: 'example.blue.bob',
             ledger: 'example.blue.',
             amount: '1',
-            executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+            executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
             expiresAt: '2016-07-02T00:00:00.000Z',
             data: {
               ilp_header: {
@@ -534,7 +534,7 @@ describe('Client', function () {
           sourceAmount: '1',
           destinationAmount: '2',
           destinationAccount: 'example.blue.bob',
-          executionCondition: 'ni:///sha-256;47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU?fpt=preimage-sha-256&cost=0',
+          executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
           expiresAt: '2016-07-02T00:00:00.000Z',
           destinationMemo: { foo: 'bar' },
           uuid: 'abcdef'
