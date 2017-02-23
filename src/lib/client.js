@@ -129,12 +129,15 @@ class Client extends EventEmitter {
         destination_precision: params.destinationPrecision,
         destination_scale: params.destinationScale
       })
+      debug('constructed quote query: ' + JSON.stringify(quoteQuery))
       const connectors = params.connectors || (yield _this.getConnectors())
+      debug('sending quote to connectors: ', connectors)
       const quotes = (yield connectors.map((connector) => {
         return _this._getQuote(connector, quoteQuery)
       })).filter(notUndefined)
       if (quotes.length === 0) return
       const bestQuote = quotes.reduce(getCheaperQuote)
+      debug('got best quote from connector:', bestQuote)
       return omitUndefined({
         sourceAmount: bestQuote.source_amount,
         destinationAmount: bestQuote.destination_amount,
@@ -245,6 +248,7 @@ class Client extends EventEmitter {
 
   _sendAndReceiveMessage (reqMessage) {
     const id = reqMessage.data.id = uuid()
+    debug('sending message: ' + JSON.stringify(reqMessage))
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Timed out while awaiting response message'))
@@ -259,6 +263,7 @@ class Client extends EventEmitter {
   }
 
   _onIncomingMessage (resMessage) {
+    debug('got incoming message: ' + JSON.stringify(resMessage))
     const resData = resMessage.data
     if (!resData) return
     // Find the matching outgoing message, if any.
