@@ -178,13 +178,11 @@ class Client extends EventEmitter {
       return Promise.reject(new Error('destinationAccount must be provided'))
     }
 
-    const transferData = {
-      ilp_header: omitUndefined({
-        account: params.destinationAccount,
-        amount: params.destinationAmount,
-        data: params.destinationMemo
-      })
-    }
+    const ilpHeader = omitUndefined({
+      account: params.destinationAccount,
+      amount: params.destinationAmount,
+      data: Client._stringifyPacketData(params.destinationMemo)
+    })
     const prefix = this.plugin.getInfo().prefix
 
     // Same-ledger payment
@@ -197,7 +195,7 @@ class Client extends EventEmitter {
         account: params.destinationAccount,
         ledger: prefix,
         amount: params.sourceAmount,
-        data: transferData,
+        ilp: ilpHeader,
         executionCondition: params.executionCondition,
         expiresAt: params.expiresAt
       }))
@@ -210,7 +208,7 @@ class Client extends EventEmitter {
       account: params.connectorAccount,
       ledger: prefix,
       amount: params.sourceAmount,
-      data: transferData,
+      ilp: ilpHeader,
       executionCondition: params.executionCondition,
       expiresAt: params.expiresAt
     })
@@ -280,6 +278,10 @@ class Client extends EventEmitter {
     clearTimeout(pendingMessage.timeout)
     delete this.pendingMessages[resData.id]
   }
+
+  static _stringifyPacketData (data) {
+    return toBase64Url(Buffer.from(JSON.stringify(data)))
+  }
 }
 
 function getCheaperQuote (quote1, quote2) {
@@ -292,6 +294,13 @@ function getCheaperQuote (quote1, quote2) {
     return quote1
   }
   return quote2
+}
+
+function toBase64Url (buffer) {
+  return buffer.toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
 }
 
 module.exports = Client

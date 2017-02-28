@@ -447,12 +447,10 @@ describe('Client', function () {
           account: 'connector',
           ledger: 'example.blue.',
           amount: '1',
-          data: {
-            ilp_header: {
-              account: 'example.red.bob',
-              amount: '2',
-              data: { foo: 'bar' }
-            }
+          ilp: {
+            account: 'example.red.bob',
+            amount: '2',
+            data: Client._stringifyPacketData({ foo: 'bar' })
           },
           executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
           expiresAt: '2016-07-02T00:00:00.000Z'
@@ -480,14 +478,10 @@ describe('Client', function () {
           account: 'connector',
           ledger: 'example.blue.',
           amount: '1',
-          data: {
-            ilp_header: {
-              account: 'example.red.bob',
-              amount: '2',
-              data: {
-                foo: 'bar'
-              }
-            }
+          ilp: {
+            account: 'example.red.bob',
+            amount: '2',
+            data: Client._stringifyPacketData({ foo: 'bar' })
           }
         })
         done()
@@ -516,12 +510,10 @@ describe('Client', function () {
             amount: '1',
             executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
             expiresAt: '2016-07-02T00:00:00.000Z',
-            data: {
-              ilp_header: {
-                account: 'example.blue.bob',
-                amount: '1',
-                data: { foo: 'bar' }
-              }
+            ilp: {
+              account: 'example.blue.bob',
+              amount: '1',
+              data: Client._stringifyPacketData({ foo: 'bar' })
             }
           })
           done()
