@@ -2,6 +2,7 @@
 
 const sinon = require('sinon')
 const chai = require('chai')
+const packet = require('ilp-packet')
 sinon.assert.expose(chai.assert, { prefix: '' })
 const chaiAsPromised = require('chai-as-promised')
 chai.use(chaiAsPromised)
@@ -447,11 +448,11 @@ describe('Client', function () {
           account: 'connector',
           ledger: 'example.blue.',
           amount: '1',
-          ilp: {
+          ilp: packet.serializeIlpPayment({
             account: 'example.red.bob',
             amount: '2',
             data: Client._stringifyPacketData({ foo: 'bar' })
-          },
+          }).toString('base64'),
           executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
           expiresAt: '2016-07-02T00:00:00.000Z'
         })
@@ -478,11 +479,11 @@ describe('Client', function () {
           account: 'connector',
           ledger: 'example.blue.',
           amount: '1',
-          ilp: {
+          ilp: packet.serializeIlpPayment({
             account: 'example.red.bob',
             amount: '2',
             data: Client._stringifyPacketData({ foo: 'bar' })
-          }
+          }).toString('base64')
         })
         done()
       })
@@ -510,11 +511,11 @@ describe('Client', function () {
             amount: '1',
             executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
             expiresAt: '2016-07-02T00:00:00.000Z',
-            ilp: {
+            ilp: packet.serializeIlpPayment({
               account: 'example.blue.bob',
               amount: '1',
               data: Client._stringifyPacketData({ foo: 'bar' })
-            }
+            }).toString('base64')
           })
           done()
         })
