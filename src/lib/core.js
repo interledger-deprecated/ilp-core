@@ -99,7 +99,6 @@ class Core extends EventEmitter {
    * @param {String} [query.destinationAmount] Either the sourceAmount or destinationAmount must be specified
    * @param {String|Number} [query.sourceExpiryDuration] Number of seconds between when the source transfer is proposed and when it expires.
    * @param {String|Number} [query.destinationExpiryDuration] Number of seconds between when the destination transfer is proposed and when it expires.
-   * @param {Object} [query.destinationPrecisionAndScale]
    * @returns {Promise<Quote>}
    */
   quote (query) {
@@ -117,7 +116,6 @@ class Core extends EventEmitter {
     const sourceExpiryDuration = parseDuration(query.sourceExpiryDuration)
     const destinationExpiryDuration = (sourceExpiryDuration || query.destinationExpiryDuration)
       ? parseDuration(query.destinationExpiryDuration) : 5
-    const destinationPrecisionAndScale = query.destinationPrecisionAndScale || {}
     const quote = {connectorAccount, sourceLedger}
 
     const localQuote = Object.assign(
@@ -146,15 +144,13 @@ class Core extends EventEmitter {
       source_address: intermediateConnector,
       source_amount: query.sourceAmount === undefined
         ? undefined
-        : (yield this._roundDown(headHop.destinationLedger, headHop.destinationAmount)),
+        : (new BigNumber(headHop.destinationAmount)).toFixed(0, BigNumber.ROUND_DOWN),
       destination_address: query.destinationAddress,
       destination_amount: query.sourceAmount === undefined ? hop.finalAmount : undefined,
       source_expiry_duration: (sourceExpiryDuration && headHop)
         ? (sourceExpiryDuration - headHop.minMessageWindow)
         : undefined,
       destination_expiry_duration: destinationExpiryDuration,
-      destination_precision: destinationPrecisionAndScale.precision,
-      destination_scale: destinationPrecisionAndScale.scale,
       slippage: '0' // Slippage will be applied at the first connector, not an intermediate one.
     }))
 
@@ -181,8 +177,6 @@ class Core extends EventEmitter {
       destinationLedger: tailQuote.destination_ledger,
       sourceAmount: headHop.sourceAmount,
       destinationAmount: tailQuote.destination_amount,
-      // No need for destinationPrecisionAndScale because the tailQuote was
-      // already rounded by the intermediate connector.
       minMessageWindow: minMessageWindow,
       liquidityCurve: curve
     }, quote, getExpiryDurations(sourceExpiryDuration, destinationExpiryDuration, minMessageWindow))
@@ -195,26 +189,14 @@ class Core extends EventEmitter {
       : this.tables.findBestHopForSourceAmount(
           sourceLedger, destinationAddress, sourceAmount)
   }
-
-  * _roundDown (ledger, amount) {
-    const info = this.getPlugin(ledger).getInfo()
-    const roundedAmount = new BigNumber(amount).toFixed(info.scale, BigNumber.ROUND_DOWN)
-    return roundedAmount.toString()
-  }
 }
 
 function hopToQuote (hop) {
-  const precisionAndScale = hop.finalPrecision && {
-    precision: hop.finalPrecision,
-    scale: hop.finalScale
-  }
   return omitUndefined({
     nextLedger: hop.destinationLedger,
     destinationLedger: hop.finalLedger,
     sourceAmount: hop.sourceAmount,
     destinationAmount: hop.finalAmount,
-    // Include the hop's precision and scale because the finalAmount hasn't been rounded yet.
-    destinationPrecisionAndScale: precisionAndScale,
     minMessageWindow: hop.minMessageWindow,
     liquidityCurve: hop.liquidityCurve,
     additionalInfo: hop.additionalInfo

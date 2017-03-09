@@ -191,9 +191,7 @@ describe('Core', function () {
         destination_ledger: 'group1.ledger3.',
         source_account: 'group1.ledger2.mark',
         min_message_window: 3,
-        points: [ [0, 0], [100, 50] ],
-        destination_precision: 10,
-        destination_scale: 2
+        points: [ [0, 0], [100, 50] ]
       }])
       // Remote route
       this.core.tables.addRoute({
@@ -271,7 +269,6 @@ describe('Core', function () {
         destinationLedger: 'group1.ledger3.',
         sourceAmount: '100',
         destinationAmount: '25.00',
-        destinationPrecisionAndScale: {precision: 10, scale: 2},
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 6,
         sourceExpiryDuration: 6.5,
@@ -314,7 +311,6 @@ describe('Core', function () {
         destinationLedger: 'group1.ledger3.',
         sourceAmount: '100',
         destinationAmount: '25.00',
-        destinationPrecisionAndScale: {precision: 10, scale: 2},
         connectorAccount: 'group1.ledger1.mark',
         minMessageWindow: 6,
         sourceExpiryDuration: 6.5,
@@ -329,10 +325,8 @@ describe('Core', function () {
         assert.deepEqual(quoteQuery, {
           source_address: 'group1.ledger2.mary',
           destination_address: 'group2.ledger2.bob',
-          source_amount: '50.00',
+          source_amount: '50',
           source_expiry_duration: 8.75 - 3,
-          destination_precision: '2',
-          destination_scale: '1',
           slippage: '0'
         })
         return Promise.resolve({
@@ -349,8 +343,7 @@ describe('Core', function () {
         sourceAddress: 'group1.ledger1.alice',
         destinationAddress: 'group2.ledger2.bob',
         sourceAmount: '100.00',
-        sourceExpiryDuration: 8.75,
-        destinationPrecisionAndScale: { precision: '2', scale: '1' }
+        sourceExpiryDuration: 8.75
       })
       assert.deepEqual(quote, {
         sourceLedger: 'group1.ledger1.',
@@ -416,9 +409,7 @@ describe('Core', function () {
           destination_ledger: 'group1.ledger4.',
           source_account: 'group1.ledger2.martin',
           min_message_window: 3,
-          points: [ [0, 0], [100, 50] ],
-          destination_precision: 10,
-          destination_scale: 2
+          points: [ [0, 0], [100, 50] ]
         })
       })
 
@@ -435,7 +426,6 @@ describe('Core', function () {
           destinationLedger: 'group1.ledger4.',
           sourceAmount: '100.00',
           destinationAmount: '25',
-          destinationPrecisionAndScale: {precision: 10, scale: 2},
           connectorAccount: 'group1.ledger1.mark',
           minMessageWindow: 6,
           sourceExpiryDuration: 6.5,

@@ -8,6 +8,7 @@ const omitUndefined = require('lodash/fp/omitBy')(isUndefined)
 const EventEmitter = require('eventemitter2')
 const notUndefined = require('lodash/fp/negate')(isUndefined)
 const startsWith = require('lodash/fp/startsWith')
+const packet = require('ilp-packet')
 const debug = require('debug')('ilp-core')
 
 class Client extends EventEmitter {
@@ -97,8 +98,6 @@ class Client extends EventEmitter {
    * @param  {String} [params.destinationAmount] Either the sourceAmount or destinationAmount must be specified
    * @param  {String} params.destinationAddress Recipient's ledger
    * @param  {Number} [params.destinationExpiryDuration] Number of seconds between when the destination transfer is proposed and when it expires.
-   * @param  {String} [params.destinationPrecision] Must be provided for ledgers that are not adjacent to the quoting connector when quoting by source amount.
-   * @param  {String} [params.destinationScale]
    * @param  {String[]} [params.connectors] List of connectors to get the quotes from
    * @return {Object} Object including the amount that was not specified
    */
@@ -125,9 +124,7 @@ class Client extends EventEmitter {
         source_amount: params.sourceAmount,
         destination_address: params.destinationAddress,
         destination_amount: params.destinationAmount,
-        destination_expiry_duration: params.destinationExpiryDuration,
-        destination_precision: params.destinationPrecision,
-        destination_scale: params.destinationScale
+        destination_expiry_duration: params.destinationExpiryDuration
       })
       debug('constructed quote query: ' + JSON.stringify(quoteQuery))
       const connectors = params.connectors || (yield _this.getConnectors())
@@ -178,11 +175,11 @@ class Client extends EventEmitter {
       return Promise.reject(new Error('destinationAccount must be provided'))
     }
 
-    const ilpHeader = omitUndefined({
+    const ilpPayment = packet.serializeIlpPayment({
       account: params.destinationAccount,
       amount: params.destinationAmount,
       data: Client._stringifyPacketData(params.destinationMemo)
-    })
+    }).toString('base64')
     const prefix = this.plugin.getInfo().prefix
 
     // Same-ledger payment
@@ -195,7 +192,7 @@ class Client extends EventEmitter {
         account: params.destinationAccount,
         ledger: prefix,
         amount: params.sourceAmount,
-        ilp: ilpHeader,
+        ilp: ilpPayment,
         executionCondition: params.executionCondition,
         expiresAt: params.expiresAt
       }))
@@ -208,7 +205,7 @@ class Client extends EventEmitter {
       account: params.connectorAccount,
       ledger: prefix,
       amount: params.sourceAmount,
-      ilp: ilpHeader,
+      ilp: ilpPayment,
       executionCondition: params.executionCondition,
       expiresAt: params.expiresAt
     })
