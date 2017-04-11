@@ -229,7 +229,8 @@ class Client extends EventEmitter {
     const prefix = this.plugin.getInfo().prefix
     return this._sendAndReceiveMessage({
       ledger: prefix,
-      account: connectorAddress,
+      from: this.plugin.getAccount(),
+      to: connectorAddress,
       data: {
         method: 'quote_request',
         data: quoteQuery

@@ -245,7 +245,8 @@ describe('Client', function () {
     it('ignores AssetsNotTraded errors', function (done) {
       this.client.getPlugin().sendMessage = makeSendMessage({
         ledger: 'example.blue.',
-        account: 'example.blue.connector1',
+        from: this.client.getPlugin().getAccount(),
+        to: 'example.blue.connector1',
         data: {
           method: 'quote_request',
           data: {
@@ -256,7 +257,8 @@ describe('Client', function () {
         }
       }, {
         ledger: 'example.blue.',
-        account: 'example.blue.connector1',
+        to: this.client.getPlugin().getAccount(),
+        from: 'example.blue.connector1',
         data: {
           method: 'error',
           data: {id: 'AssetsNotTradedError', message: 'broken'}
@@ -445,7 +447,7 @@ describe('Client', function () {
       .then(function () {
         assert.calledWithMatch(spy, {
           id: 'abcdef',
-          account: 'connector',
+          account: 'connector', // even though sendMessage now uses .to and .from, sendTransfer still uses .account
           ledger: 'example.blue.',
           amount: '1',
           ilp: packet.serializeIlpPayment({
@@ -476,8 +478,8 @@ describe('Client', function () {
       })
       .then(function () {
         assert.calledWithMatch(spy, {
-          account: 'connector',
           ledger: 'example.blue.',
+          account: 'connector', // even though sendMessage now uses .to and .from, sendTransfer still uses .account
           amount: '1',
           ilp: packet.serializeIlpPayment({
             account: 'example.red.bob',
@@ -506,7 +508,7 @@ describe('Client', function () {
         .then(function () {
           assert.calledWithMatch(spy, {
             id: 'abcdef',
-            account: 'example.blue.bob',
+            account: 'example.blue.bob', // even though sendMessage now uses .to and .from, sendTransfer still uses .account
             ledger: 'example.blue.',
             amount: '1',
             executionCondition: 'uzoYx3K6u-Nt6kZjbN6KmH0yARfhkj9e17eQfpSeB7U',
@@ -573,7 +575,8 @@ describe('Client', function () {
       const start = Date.now()
       client._sendAndReceiveMessage({
         ledger: 'example.blue.',
-        account: 'example.blue.mark',
+        from: client.getPlugin().getAccount(),
+        to: 'example.blue.mark',
         data: {}
       }).then((response) => {
         assert(false)
@@ -591,7 +594,8 @@ describe('Client', function () {
         process.nextTick(() => {
           client.getPlugin().emitAsync('incoming_message', {
             ledger: 'example.blue.',
-            account: 'example.blue.connector1',
+            from: client.getPlugin().getAccount(),
+            to: 'example.blue.connector1',
             data: {id: message.data.id, method: 'quote_response'}
           })
         })
@@ -600,7 +604,8 @@ describe('Client', function () {
 
       client._sendAndReceiveMessage({
         ledger: 'example.blue.',
-        account: 'example.blue.connector1',
+        from: client.getPlugin().getAccount(),
+        to: 'example.blue.connector1',
         data: {}
       }).then((response) => {
         done()
@@ -691,14 +696,16 @@ function makeSendQuoteMessage (quoteRequestBody, quoteResponseBody, connector) {
   connector = connector || 'example.blue.connector1'
   return makeSendMessage({
     ledger: 'example.blue.',
-    account: connector,
+    from: quoteRequestBody.source_address,
+    to: connector,
     data: {
       method: 'quote_request',
       data: quoteRequestBody
     }
   }, {
     ledger: 'example.blue.',
-    account: connector,
+    from: connector,
+    to: quoteRequestBody.source_address,
     data: {
       method: 'quote_response',
       data: quoteResponseBody
