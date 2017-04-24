@@ -142,11 +142,11 @@ class Core extends EventEmitter {
     const intermediateConnector = hop.destinationCreditAccount
     const tailQuote = yield sourceClient._getQuote(intermediateConnector, omitUndefined({
       source_address: intermediateConnector,
-      source_amount: query.sourceAmount === undefined
+      source_amount: (!query.sourceAmount)
         ? undefined
         : (new BigNumber(headHop.destinationAmount)).toFixed(0, BigNumber.ROUND_DOWN),
       destination_address: query.destinationAddress,
-      destination_amount: query.sourceAmount === undefined ? hop.finalAmount : undefined,
+      destination_amount: (!query.sourceAmount) ? hop.finalAmount : undefined,
       source_expiry_duration: (sourceExpiryDuration && headHop)
         ? (sourceExpiryDuration - headHop.minMessageWindow)
         : undefined,
@@ -183,7 +183,7 @@ class Core extends EventEmitter {
   }
 
   _findBestHopForAmount (sourceLedger, destinationAddress, sourceAmount, destinationAmount) {
-    return sourceAmount === undefined
+    return (!sourceAmount)
       ? this.tables.findBestHopForDestinationAmount(
           sourceLedger, destinationAddress, destinationAmount)
       : this.tables.findBestHopForSourceAmount(
