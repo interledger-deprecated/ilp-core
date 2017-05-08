@@ -6,6 +6,7 @@
 [circle-url]: https://circleci.com/gh/interledgerjs/ilp-core
 [codecov-image]: https://codecov.io/gh/interledgerjs/ilp-core/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/interledgerjs/ilp-core
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Finterledgerjs%2Filp-core.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Finterledgerjs%2Filp-core?ref=badge_shield)
 
 > Core ILP module — handles ledger abstraction and quoting
 
