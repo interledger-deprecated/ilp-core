@@ -1,4 +1,4 @@
-# ilp-core [![npm][npm-image]][npm-url] [![circle][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url]
+# ilp-core [![npm][npm-image]][npm-url] [![circle][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url] [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Finterledgerjs%2Filp-core.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Finterledgerjs%2Filp-core?ref=badge_shield)
 
 [npm-image]: https://img.shields.io/npm/v/ilp-core.svg?style=flat
 [npm-url]: https://npmjs.org/package/ilp-core
@@ -106,3 +106,6 @@ core.on('receive', (client, transfer) => {
 })
 ```
 
+## License
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Finterledgerjs%2Filp-core.svg?type=large)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Finterledgerjs%2Filp-core?ref=badge_large)
