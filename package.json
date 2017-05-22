@@ -65,7 +65,7 @@
     "debug": "^2.2.0",
     "eventemitter2": "^2.0.0",
     "ilp-packet": "~1.1.1",
-    "ilp-routing": "^7.0.0",
+    "ilp-routing": "^9.0.1",
     "lodash": "^4.13.1",
     "uuid": "^2.0.2"
   }
