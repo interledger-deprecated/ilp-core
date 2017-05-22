@@ -121,15 +121,14 @@ class Core extends EventEmitter {
     const localQuote = Object.assign(
       getExpiryDurations(sourceExpiryDuration, destinationExpiryDuration, hop.minMessageWindow),
       hopToQuote(hop), quote)
-    const isLocalPath = hop.isLocal
-    const isDirectPath = getLedgerPrefix(query.destinationAddress) === hop.finalLedger
 
-    // If we know a local route to the destinationAddress, use the local route.
-    // If the route's destination is exactly the prefix being targeted, use the local route.
-    // Otherwise, ask a connector closer to the destination.
-    // if (isLocalPath || isDirectPath) return localQuote
-    if (isLocalPath) return localQuote
-    if (isDirectPath) debug('quote is direct, but multi-hop-direct is disabled')
+    if (localQuote.sourceAmount && localQuote.destinationAmount) return localQuote
+
+    // Reaching this point means the best next hop is know, but its liquidity curve is not
+    // This can happen if the next hop had BROADCAST_CURVES set to false, and/or if this connector
+    // had SAVE_CURVES set to false.
+    // In that case, get a live tailQuote from the next connector on the path,
+    // and add our headHop to that:
 
     let headHop
     // Quote by source amount
@@ -201,14 +200,6 @@ function hopToQuote (hop) {
     liquidityCurve: hop.liquidityCurve,
     additionalInfo: hop.additionalInfo
   })
-}
-
-/**
- * @param {IlpAddress} address
- * @returns {IlpAddress} prefix
- */
-function getLedgerPrefix (address) {
-  return address.split('.').slice(0, -1).join('.') + '.'
 }
 
 function parseDuration (expiryDuration) {
