@@ -196,11 +196,16 @@ describe('Core', function () {
       // Remote route
       this.core.tables.addRoute({
         source_ledger: 'group1.ledger2.',
-        destination_ledger: 'group2.',
+        destination_ledger: 'group2.withcurve.',
         source_account: 'group1.ledger2.mary',
         min_message_window: 4,
-        // This curve is only used for route selection, not for quoting amounts.
         points: [ [0, 0], [100, 50] ]
+      })
+      this.core.tables.addRoute({
+        source_ledger: 'group1.ledger2.',
+        destination_ledger: 'group2.nocurve.',
+        source_account: 'group1.ledger2.mary',
+        min_message_window: 4
       })
     })
 
@@ -324,13 +329,13 @@ describe('Core', function () {
         assert.equal(connector, 'group1.ledger2.mary')
         assert.deepEqual(quoteQuery, {
           source_address: 'group1.ledger2.mary',
-          destination_address: 'group2.ledger2.bob',
+          destination_address: 'group2.nocurve.ledger2.bob',
           source_amount: '50',
           source_expiry_duration: 8.75 - 3,
           slippage: '0'
         })
         return Promise.resolve({
-          destination_ledger: 'group2.ledger2.',
+          destination_ledger: 'group2.nocurve.ledger2.',
           source_amount: '50.00',
           destination_amount: '10.00',
           source_expiry_duration: '1.75',
@@ -341,14 +346,14 @@ describe('Core', function () {
 
       const quote = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
-        destinationAddress: 'group2.ledger2.bob',
+        destinationAddress: 'group2.nocurve.ledger2.bob',
         sourceAmount: '100.00',
         sourceExpiryDuration: 8.75
       })
       assert.deepEqual(quote, {
         sourceLedger: 'group1.ledger1.',
         nextLedger: 'group1.ledger2.',
-        destinationLedger: 'group2.ledger2.',
+        destinationLedger: 'group2.nocurve.ledger2.',
         sourceAmount: '100.00',
         destinationAmount: '10.00',
         connectorAccount: 'group1.ledger1.mark',
@@ -364,13 +369,13 @@ describe('Core', function () {
         assert.equal(connector, 'group1.ledger2.mary')
         assert.deepEqual(quoteQuery, {
           source_address: 'group1.ledger2.mary',
-          destination_address: 'group2.ledger2.bob',
+          destination_address: 'group2.nocurve.ledger2.bob',
           destination_amount: '10.00',
           destination_expiry_duration: 0.5,
           slippage: '0'
         })
         return Promise.resolve({
-          destination_ledger: 'group2.ledger2.',
+          destination_ledger: 'group2.nocurve.ledger2.',
           source_amount: '50.00',
           destination_amount: '10.00',
           source_expiry_duration: '0.75',
@@ -381,14 +386,14 @@ describe('Core', function () {
 
       const quote = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
-        destinationAddress: 'group2.ledger2.bob',
+        destinationAddress: 'group2.nocurve.ledger2.bob',
         destinationAmount: '10.00',
         destinationExpiryDuration: 0.5
       })
       assert.deepEqual(quote, {
         sourceLedger: 'group1.ledger1.',
         nextLedger: 'group1.ledger2.',
-        destinationLedger: 'group2.ledger2.',
+        destinationLedger: 'group2.nocurve.ledger2.',
         sourceAmount: '100',
         destinationAmount: '10.00',
         connectorAccount: 'group1.ledger1.mark',
@@ -399,10 +404,7 @@ describe('Core', function () {
       })
     })
 
-    // note: the functionality this tests has been disabled, to allow
-    // for a less chatty broadcast system, but it may be re-enabled more
-    // or less as-is, depending on further improvements
-    describe.skip('multiple hops; non-local; no remote requests', function () {
+    describe('multiple hops; non-local; no remote requests', function () {
       beforeEach(function () {
         this.core.tables.addRoute({
           source_ledger: 'group1.ledger2.',
@@ -434,17 +436,17 @@ describe('Core', function () {
         })
       })
     })
-    it.skip('returns a quote when there is a direct (but remote) path', function * () {
+    it('returns a quote when there is a direct (but remote) path', function * () {
       const quote2 = yield this.core.quote({
         sourceAddress: 'group1.ledger1.alice',
-        destinationAddress: 'group2.bob',
+        destinationAddress: 'group2.withcurve.bob',
         sourceAmount: '100.00',
         sourceExpiryDuration: '7.5'
       })
       assert.deepEqual(quote2, {
         sourceLedger: 'group1.ledger1.',
         nextLedger: 'group1.ledger2.',
-        destinationLedger: 'group2.',
+        destinationLedger: 'group2.withcurve.',
         sourceAmount: '100.00',
         destinationAmount: '25',
         connectorAccount: 'group1.ledger1.mark',
